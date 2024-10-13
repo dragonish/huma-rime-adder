@@ -277,13 +277,22 @@ class App:
 
         pinyin_code = self.pinyin_code_var.get()
         if pinyin_code:
-            if os.path.exists(self.pinyin_file):
-                pinyin_weight = str_to_int(self.pinyin_weight_var.get())
-                self.append_line_to_file(
-                    self.pinyin_file, new_word, pinyin_code, pinyin_weight
-                )
-            else:
-                logger.warning("没有找到拼音码表文件: {}", self.pinyin_file)
+            exist = False
+            if new_code in self.code_dict:
+                for unit in self.code_dict[new_code]:
+                    if new_word == unit["word"]:
+                        exist = True
+                        break
+
+            # 调频时不插入拼音
+            if not exist:
+                if os.path.exists(self.pinyin_file):
+                    pinyin_weight = str_to_int(self.pinyin_weight_var.get())
+                    self.append_line_to_file(
+                        self.pinyin_file, new_word, pinyin_code, pinyin_weight
+                    )
+                else:
+                    logger.warning("没有找到拼音码表文件: {}", self.pinyin_file)
 
         if close:
             self.master.destroy()
@@ -470,15 +479,15 @@ def parse_lines(
 
             # 处理编码字典
             if code in code_dict:
-                exits = False
+                exist = False
                 for c in code_dict[code]:
                     if c["word"] == word:
                         # 覆盖同编码同词条项的权重
                         c["weight"] = weight
                         c["source"] = table_name
-                        exits = True
+                        exist = True
                         break
-                if not exits:
+                if not exist:
                     code_dict[code].append(
                         {"word": word, "weight": weight, "source": table_name}
                     )

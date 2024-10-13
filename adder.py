@@ -13,6 +13,7 @@ from pypinyin import lazy_pinyin
 class CodeUnit(TypedDict):
     word: str
     weight: int
+    source: str
 
 
 class Columns(TypedDict):
@@ -224,7 +225,9 @@ class App:
             # 降序排序
             self.code_dict[code].sort(key=lambda item: item["weight"], reverse=True)
             for item in self.code_dict[code]:
-                self.listbox.insert("end", f"{item["word"]} \t {item['weight']}")
+                self.listbox.insert(
+                    "end", f"{item["word"]}    {item['weight']}    {item['source']}"
+                )
         else:
             self.listbox.insert("end", "居然是零耶")
 
@@ -246,11 +249,19 @@ class App:
                 if not close:
                     if new_code in self.code_dict:
                         self.code_dict[new_code].append(
-                            {"word": new_word, "weight": new_weight}
+                            {
+                                "word": new_word,
+                                "weight": new_weight,
+                                "source": "tigress.extended",
+                            }
                         )
                     else:
                         self.code_dict[new_code] = [
-                            {"word": new_word, "weight": new_weight}
+                            {
+                                "word": new_word,
+                                "weight": new_weight,
+                                "source": "tigress.extended",
+                            }
                         ]
             else:
                 logger.error("没有找到用户扩展码表文件: {}", self.extended_file)
@@ -402,7 +413,10 @@ def parse_columns(columns: Columns, line: str) -> None:
 
 @logger.catch
 def parse_lines(
-    simple_dict: dict[str, str], code_dict: dict[str, list[CodeUnit]], lines: list[str]
+    simple_dict: dict[str, str],
+    code_dict: dict[str, list[CodeUnit]],
+    lines: list[str],
+    table_name: str,
 ) -> None:
     """解析行内容列表为码表字典。
 
@@ -410,6 +424,7 @@ def parse_lines(
         simple_dict (dict[str, str]): 单字字典
         code_dict (dict[str, CodeUnit]): 编码字典
         word_lines (list[str]): 行内容列表
+        table_name (str): 码表名称
     """
     columns_dict: Columns = {}
     in_header = True
@@ -453,12 +468,17 @@ def parse_lines(
                     if c["word"] == word:
                         # 覆盖同编码同词条项的权重
                         c["weight"] = weight
+                        c["source"] = table_name
                         exits = True
                         break
                 if not exits:
-                    code_dict[code].append({"word": word, "weight": weight})
+                    code_dict[code].append(
+                        {"word": word, "weight": weight, "source": table_name}
+                    )
             else:
-                code_dict[code] = [{"word": word, "weight": weight}]
+                code_dict[code] = [
+                    {"word": word, "weight": weight, "source": table_name}
+                ]
 
 
 if __name__ == "__main__":
@@ -519,13 +539,18 @@ if __name__ == "__main__":
     for table in import_tables:
         table_file = os.path.join(work_dir, table + ".dict.yaml")
         if os.path.exists(table_file):
-            parse_lines(simple_dict, code_dict, read_file(table_file))
+            parse_lines(simple_dict, code_dict, read_file(table_file), table)
             logger.info("解析码表文件： {}", table_file)
         else:
             logger.warning("没有找到码表文件: {}", table_file)
 
     # 解析用户扩展码表文件
-    parse_lines(simple_dict, code_dict, read_file(tigress_extended_dict_yaml))
+    parse_lines(
+        simple_dict,
+        code_dict,
+        read_file(tigress_extended_dict_yaml),
+        "tigress.extended",
+    )
     logger.info("解析用户扩展码表文件: {}", tigress_extended_dict_yaml)
 
     logger.info(

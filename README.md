@@ -1,6 +1,6 @@
 # huma-rime-adder
 
-基于虎码秃版方案的 Rime 加词器。
+基于[虎码秃版](http://huma.ysepan.com/)方案的 Rime 加词器。
 
 ## 功能
 

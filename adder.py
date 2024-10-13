@@ -237,6 +237,8 @@ class App:
         Args:
             close (bool): 是否关闭窗口
         """
+        exist = False  # 为 True 时说明该词条被用于调频了
+
         new_word = self.new_word_var.get()
         new_code = self.new_code_var.get()
         if new_word and new_code:
@@ -252,13 +254,20 @@ class App:
 
                 if not close:
                     if new_code in self.code_dict:
-                        self.code_dict[new_code].append(
-                            {
-                                "word": new_word,
-                                "weight": new_weight,
-                                "source": "tigress.extended",
-                            }
-                        )
+                        for unit in self.code_dict[new_code]:
+                            if new_word == unit["word"]:
+                                unit["weight"] = new_weight
+                                unit["source"] = "tigress.extended"
+                                exist = True
+                                break
+                        if not exist:
+                            self.code_dict[new_code].append(
+                                {
+                                    "word": new_word,
+                                    "weight": new_weight,
+                                    "source": "tigress.extended",
+                                }
+                            )
                     else:
                         self.code_dict[new_code] = [
                             {
@@ -277,15 +286,18 @@ class App:
 
         pinyin_code = self.pinyin_code_var.get()
         if pinyin_code:
-            exist = False
-            if new_code in self.code_dict:
-                for unit in self.code_dict[new_code]:
-                    if new_word == unit["word"]:
-                        exist = True
-                        break
+            if close:
+                # 查询词条是否用于调频
+                if new_code in self.code_dict:
+                    for unit in self.code_dict[new_code]:
+                        if new_word == unit["word"]:
+                            exist = True
+                            break
 
             # 调频时不插入拼音
-            if not exist:
+            if exist:
+                logger.debug("该词条被用于调频，所以不会插入拼音")
+            else:
                 if os.path.exists(self.pinyin_file):
                     pinyin_weight = str_to_int(self.pinyin_weight_var.get())
                     self.append_line_to_file(

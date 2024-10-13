@@ -79,7 +79,7 @@ class App:
         new_code_entry = tk.Entry(main_frame, textvariable=self.new_code_var)
         new_code_entry.grid(row=1, column=1)
         tk.Label(main_frame, text="权重:").grid(row=1, column=2)
-        self.new_weight_var = tk.IntVar(value=0)
+        self.new_weight_var = tk.StringVar(value="0")
         new_weight_entry = tk.Entry(main_frame, textvariable=self.new_weight_var)
         new_weight_entry.grid(row=1, column=3)
 
@@ -88,7 +88,7 @@ class App:
         pinyin_code_entry = tk.Entry(main_frame, textvariable=self.pinyin_code_var)
         pinyin_code_entry.grid(row=2, column=1)
         tk.Label(main_frame, text="权重:").grid(row=2, column=2)
-        self.pinyin_weight_var = tk.IntVar(value=0)
+        self.pinyin_weight_var = tk.StringVar(value="0")
         pinyin_weight_entry = tk.Entry(main_frame, textvariable=self.pinyin_weight_var)
         pinyin_weight_entry.grid(row=2, column=3)
 
@@ -124,8 +124,8 @@ class App:
             self.status_var.set("请输入要添加的词条")
             return
 
-        self.new_weight_var.set(0)
-        self.pinyin_weight_var.set(0)
+        self.new_weight_var.set("0")
+        self.pinyin_weight_var.set("0")
         new_code = ""
 
         if new_word_len == 1:
@@ -241,7 +241,7 @@ class App:
         new_code = self.new_code_var.get()
         if new_word and new_code:
             if os.path.exists(self.extended_file):
-                new_weight = self.new_weight_var.get()
+                new_weight = str_to_int(self.new_weight_var.get())
                 state = self.append_line_to_file(
                     self.extended_file, new_word, new_code, new_weight
                 )
@@ -278,7 +278,7 @@ class App:
         pinyin_code = self.pinyin_code_var.get()
         if pinyin_code:
             if os.path.exists(self.pinyin_file):
-                pinyin_weight = self.pinyin_weight_var.get()
+                pinyin_weight = str_to_int(self.pinyin_weight_var.get())
                 self.append_line_to_file(
                     self.pinyin_file, new_word, pinyin_code, pinyin_weight
                 )
@@ -290,9 +290,9 @@ class App:
         else:
             self.new_word_var.set("")
             self.new_code_var.set("")
-            self.new_weight_var.set(0)
+            self.new_weight_var.set("0")
             self.pinyin_code_var.set("")
-            self.pinyin_weight_var.set(0)
+            self.pinyin_weight_var.set("0")
             self.listbox.delete(0, "end")
             self.status_var.set("已向码表文件插入新词条")
 

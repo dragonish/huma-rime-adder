@@ -296,7 +296,7 @@ class App:
 
             # 调频时不插入拼音
             if exist:
-                logger.debug("该词条被用于调频，所以不会插入拼音")
+                logger.debug("该词条({})被用于调频，所以不会插入拼音", new_word)
             else:
                 if os.path.exists(self.pinyin_file):
                     pinyin_weight = str_to_int(self.pinyin_weight_var.get())

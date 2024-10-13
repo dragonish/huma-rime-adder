@@ -242,9 +242,13 @@ class App:
         if new_word and new_code:
             if os.path.exists(self.extended_file):
                 new_weight = self.new_weight_var.get()
-                self.append_line_to_file(
+                state = self.append_line_to_file(
                     self.extended_file, new_word, new_code, new_weight
                 )
+
+                if not state:
+                    self.status_var.set("无法将新词条插入码表文件")
+                    return
 
                 if not close:
                     if new_code in self.code_dict:
@@ -292,9 +296,7 @@ class App:
             self.listbox.delete(0, "end")
             self.status_var.set("已向码表文件插入新词条")
 
-    def append_line_to_file(
-        self, file_path: str, word: str, code: str, weight: int
-    ) -> None:
+    def append_line_to_file(self, file_path: str, word: str, code: str, weight: int):
         """在指定文件的末尾添加行内容
 
         Args:
@@ -302,6 +304,9 @@ class App:
             word (str): 词条内容
             code (str): 编码内容
             weight (int): 权重值
+
+        Returns:
+            bool: 是否执行成功
         """
         try:
             with io.open(file_path, mode="a+") as f:
@@ -342,6 +347,7 @@ class App:
                     table=file_path,
                     input=input,
                 )
+                return True
         except PermissionError:
             logger.error("没有权限访问该文件: {}", file_path)
         except IOError:
@@ -350,6 +356,7 @@ class App:
             logger.error("操作系统错误: {}", file_path)
         except ValueError:
             logger.error("值错误: {}", file_path)
+        return False
 
 
 def read_file(path: str) -> list[str]:

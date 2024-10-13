@@ -339,11 +339,8 @@ class App:
                 f.seek(0)
                 content = f.read()
 
-                # 获取最后一行
-                # last_line = content.splitlines()[-1]
-
                 # 移动到文件末尾以准备写入
-                f.seek(0, 2)  # 移动到文件末尾
+                f.seek(0, 2)
 
                 # 检查最后一行是否以换行符结束
                 if content.endswith("\n"):

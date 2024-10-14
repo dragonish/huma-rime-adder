@@ -102,7 +102,9 @@ class App:
 
         tk.Label(main_frame, text="拼音:").grid(row=2, column=0)
         self.pinyin_code_var = tk.StringVar()
-        tk.Entry(main_frame, textvariable=self.pinyin_code_var).grid(row=2, column=1)
+        tk.Entry(main_frame, textvariable=self.pinyin_code_var).grid(
+            row=2, column=1, sticky="ew"
+        )
 
         tk.Label(main_frame, text="权重:").grid(row=2, column=2)
         pinyin_weight_frame = tk.Frame(main_frame)

@@ -47,11 +47,10 @@ class App:
         self.master = master
 
         master.title("虎码秃版加词器")
-        master.geometry("400x300")
 
         # 主框架
         main_frame = tk.Frame(master)
-        main_frame.pack(pady=2)
+        main_frame.pack(padx=5, pady=5)
 
         # 创建标签和输入框
         tk.Label(main_frame, text="新词:").grid(row=0, column=0)

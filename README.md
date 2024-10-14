@@ -11,7 +11,13 @@
 
 ## 预览
 
-![preview](./images/preview.png)
+### Windows
+
+![windows](./images/windows.png)
+
+### macOS
+
+![macOS](./images/macos.png)
 
 ## 安装
 

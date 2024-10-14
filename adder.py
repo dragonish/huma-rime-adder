@@ -51,46 +51,77 @@ class App:
 
         # 主框架
         main_frame = tk.Frame(master)
-        main_frame.pack(pady=5)
+        main_frame.pack(pady=2)
 
         # 创建标签和输入框
         tk.Label(main_frame, text="新词:").grid(row=0, column=0)
         self.new_word_var = tk.StringVar()
-        new_word_entry = tk.Entry(main_frame, textvariable=self.new_word_var)
-        new_word_entry.grid(row=0, column=1)
+
+        word_frame = tk.Frame(main_frame)
+        word_frame.grid(row=0, column=1)
+        new_word_entry = tk.Entry(word_frame, width=15, textvariable=self.new_word_var)
+        new_word_entry.grid(row=0, column=1, padx=2)
         new_word_entry.bind("<Return>", self.encode)
         new_word_entry.focus_set()
+        tk.Button(word_frame, text="编码", command=self.encode).grid(
+            row=0, column=2, padx=2
+        )
 
-        tk.Button(main_frame, text="编码", command=self.encode).grid(row=0, column=2)
         button_frame = tk.Frame(main_frame)
         button_frame.grid(row=0, column=3)
-        tk.Button(button_frame, text="查询", command=self.query).grid(
-            row=0, column=0, padx=4
-        )
         tk.Button(button_frame, text="仅添加", command=lambda: self.add(False)).grid(
-            row=0, column=1, padx=4
+            row=0, column=1, padx=15
         )
         tk.Button(button_frame, text="添加", command=lambda: self.add(True)).grid(
-            row=0, column=2, padx=4
+            row=0, column=2, padx=15
         )
 
         tk.Label(main_frame, text="编码:").grid(row=1, column=0)
+        code_frame = tk.Frame(main_frame)
+        code_frame.grid(row=1, column=1)
         self.new_code_var = tk.StringVar()
-        new_code_entry = tk.Entry(main_frame, textvariable=self.new_code_var)
-        new_code_entry.grid(row=1, column=1)
+        tk.Entry(code_frame, width=15, textvariable=self.new_code_var).grid(
+            row=0, column=0, padx=2
+        )
+        tk.Button(code_frame, text="查询", command=self.query).grid(
+            row=0, column=1, padx=2
+        )
+
         tk.Label(main_frame, text="权重:").grid(row=1, column=2)
+        weight_frame = tk.Frame(main_frame)
+        weight_frame.grid(row=1, column=3)
         self.new_weight_var = tk.StringVar(value="0")
-        new_weight_entry = tk.Entry(main_frame, textvariable=self.new_weight_var)
-        new_weight_entry.grid(row=1, column=3)
+        tk.Entry(weight_frame, width=10, textvariable=self.new_weight_var).grid(
+            row=0, column=0, padx=2
+        )
+        tk.Button(weight_frame, text="置顶", command=self.set_top_weight).grid(
+            row=0, column=1, padx=2
+        )
+        tk.Button(
+            weight_frame, text="清零", command=lambda: self.new_weight_var.set("0")
+        ).grid(row=0, column=2, padx=2)
 
         tk.Label(main_frame, text="拼音:").grid(row=2, column=0)
         self.pinyin_code_var = tk.StringVar()
-        pinyin_code_entry = tk.Entry(main_frame, textvariable=self.pinyin_code_var)
-        pinyin_code_entry.grid(row=2, column=1)
+        tk.Entry(main_frame, textvariable=self.pinyin_code_var).grid(row=2, column=1)
+
         tk.Label(main_frame, text="权重:").grid(row=2, column=2)
+        pinyin_weight_frame = tk.Frame(main_frame)
+        pinyin_weight_frame.grid(row=2, column=3)
         self.pinyin_weight_var = tk.StringVar(value="0")
-        pinyin_weight_entry = tk.Entry(main_frame, textvariable=self.pinyin_weight_var)
-        pinyin_weight_entry.grid(row=2, column=3)
+        tk.Entry(
+            pinyin_weight_frame, width=10, textvariable=self.pinyin_weight_var
+        ).grid(row=0, column=0, padx=2)
+        tk.Button(
+            pinyin_weight_frame,
+            text="置顶",
+            command=lambda: self.pinyin_weight_var.set("1000000"),
+        ).grid(row=0, column=1, padx=2)
+        tk.Button(
+            pinyin_weight_frame,
+            text="清零",
+            command=lambda: self.pinyin_weight_var.set("0"),
+        ).grid(row=0, column=2, padx=2)
 
         tk.Label(main_frame, text="重码:").grid(row=3, column=0)
         self.listbox = tk.Listbox(main_frame)
@@ -101,8 +132,7 @@ class App:
         bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
         # 状态栏
-        self.status_var = tk.StringVar()
-        self.status_var.set("等待操作中")
+        self.status_var = tk.StringVar(value="等待操作中")
         status_bar = tk.Label(
             bottom_frame,
             textvariable=self.status_var,
@@ -230,6 +260,16 @@ class App:
                 )
         else:
             self.listbox.insert("end", "居然是零耶")
+
+    def set_top_weight(self) -> None:
+        """将权重值置顶"""
+        code = self.new_code_var.get()
+        if code and code in self.code_dict:
+            # 降序排序
+            self.code_dict[code].sort(key=lambda item: item["weight"], reverse=True)
+            self.new_weight_var.set(f"1{self.code_dict[code][0]["weight"]}")
+        else:
+            self.new_weight_var.set("100")
 
     def add(self, close: bool) -> None:
         """添加新的词条

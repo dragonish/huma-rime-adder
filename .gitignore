@@ -163,3 +163,4 @@ cython_debug/
 *.bat
 *.sh
 /logs
+.DS_Store

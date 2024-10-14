@@ -269,7 +269,7 @@ class App:
             self.code_dict[code].sort(key=lambda item: item["weight"], reverse=True)
             self.new_weight_var.set(f"1{self.code_dict[code][0]["weight"]}")
         else:
-            self.new_weight_var.set("100")
+            self.new_weight_var.set("10")
 
     def add(self, close: bool) -> None:
         """添加新的词条

@@ -3,6 +3,7 @@
 
 import os
 import io
+import sys
 import argparse
 import tkinter as tk
 from typing import TypedDict
@@ -45,6 +46,7 @@ class App:
         self.extended_file = extended_file
         self.pinyin_file = pinyin_file
         self.master = master
+        self.mod = False  # 标识是否实际插入过词条
 
         master.title("虎码秃版加词器")
 
@@ -292,6 +294,7 @@ class App:
                 if not state:
                     self.status_var.set("无法将新词条插入码表文件")
                     return
+                self.mod = True
 
                 if not close:
                     if new_code in self.code_dict:
@@ -416,6 +419,14 @@ class App:
         except ValueError:
             logger.error("值错误: {}", file_path)
         return False
+
+    def mod_state(self):
+        """获取执行状态
+
+        Returns:
+            bool: `Ture` 表示有实际插入词条
+        """
+        return self.mod
 
 
 def read_file(path: str) -> list[str]:
@@ -573,8 +584,8 @@ if __name__ == "__main__":
     tigress_extended_dict_yaml = os.path.join(work_dir, "tigress.extended.dict.yaml")
     if not os.path.exists(tigress_extended_dict_yaml):
         logger.error("没有找到用户扩展码表文件: {}", tigress_extended_dict_yaml)
-        logger.warning("缺失必要文件，程序结束运行")
-        exit(1)  #! 退出程序
+        logger.warning("缺失必要文件，程序结束运行，退出代码: {}", 1)
+        sys.exit(1)  #! 退出程序
 
     extended_lines = read_file(tigress_extended_dict_yaml)
 
@@ -640,5 +651,8 @@ if __name__ == "__main__":
     # 运行主循环
     logger.info("显示程序窗口")
     root.mainloop()
-    logger.info("程序结束运行")
-    exit(0)
+    exit_code = 3
+    if app.mod_state():
+        exit_code = 0
+    logger.info("程序结束运行，退出代码: {}", exit_code)
+    sys.exit(exit_code)

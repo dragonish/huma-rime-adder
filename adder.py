@@ -157,7 +157,6 @@ class App:
             self.status_var.set("请输入要添加的词条")
             return
 
-        self.new_weight_var.set("0")
         self.pinyin_weight_var.set("0")
         new_code = ""
 
@@ -202,6 +201,10 @@ class App:
             else:
                 self.status_var.set("无法编码此多字词组，请自行输入编码")
 
+        if new_code and not new_code in self.code_dict:
+            self.new_weight_var.set("10")
+        else:
+            self.new_weight_var.set("0")
         new_pinyin = self.get_pinyin(new_word)
         self.new_code_var.set(new_code)
         self.pinyin_code_var.set(new_pinyin)
@@ -272,7 +275,7 @@ class App:
             self.code_dict[code].sort(key=lambda item: item["weight"], reverse=True)
             self.new_weight_var.set(f"1{self.code_dict[code][0]["weight"]}")
         else:
-            self.new_weight_var.set("10")
+            self.new_weight_var.set("100")
 
     def add(self, close: bool) -> None:
         """添加新的词条

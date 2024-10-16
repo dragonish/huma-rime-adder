@@ -79,9 +79,9 @@ class App:
         code_frame = tk.Frame(main_frame)
         code_frame.grid(row=1, column=1)
         self.new_code_var = tk.StringVar()
-        tk.Entry(code_frame, width=15, textvariable=self.new_code_var).grid(
-            row=0, column=0, padx=2
-        )
+        new_code_entry = tk.Entry(code_frame, width=15, textvariable=self.new_code_var)
+        new_code_entry.grid(row=0, column=0, padx=2)
+        new_code_entry.bind("<Return>", self.query)
         tk.Button(code_frame, text="查询", command=self.query).grid(
             row=0, column=1, padx=2
         )
@@ -293,8 +293,12 @@ class App:
             pinyin=new_pinyin,
         )
 
-    def query(self) -> None:
-        """查询当前编码的重码情况"""
+    def query(self, _event=None) -> None:
+        """查询当前编码的重码情况
+
+        Args:
+            _event (Event[Entry], optional): event. Defaults to None.
+        """
         code = self.new_code_var.get()
         if len(code) == 0:
             self.status_var.set("请在编码框输入编码")

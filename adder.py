@@ -5,6 +5,7 @@ import os
 import io
 import sys
 import argparse
+import threading
 import tkinter as tk
 from typing import TypedDict
 from loguru import logger
@@ -27,25 +28,22 @@ class App:
     def __init__(
         self,
         master: tk.Tk,
-        simple_dict: dict[str, str],
-        code_dict: dict[str, list[CodeUnit]],
+        work_dir: str,
         extended_file: str,
-        pinyin_file: str,
     ) -> None:
         """构造器
 
         Args:
             master (tk.Tk): Tkinter 窗口对象
-            simple_dict (dict[str, str]): 单字字典
-            code_dict (dict[str, list[CodeUnit]]): 编码字典
+            work_dir (str): 工作目录
             extended_file (str): 用户扩展码表文件路径
-            pinyin_file (str): 拼音码表文件路径
         """
-        self.simple_dict = simple_dict
-        self.code_dict = code_dict
-        self.extended_file = extended_file
-        self.pinyin_file = pinyin_file
         self.master = master
+        self.work_dir = work_dir
+        self.extended_file = extended_file
+        self.pinyin_file = os.path.join(self.work_dir, "PY_c.dict.yaml")
+        self.simple_dict: dict[str, str] = {}
+        self.code_dict: dict[str, list[CodeUnit]] = {}
         self.mod = False  # 标识是否实际插入过词条
 
         master.title("虎码秃版加词器")
@@ -135,7 +133,7 @@ class App:
         bottom_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
         # 状态栏
-        self.status_var = tk.StringVar(value="等待操作中")
+        self.status_var = tk.StringVar(value="解析码表中")
         status_bar = tk.Label(
             bottom_frame,
             textvariable=self.status_var,
@@ -144,6 +142,85 @@ class App:
             anchor="w",
         )
         status_bar.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        # 使用 after 方法延迟启动解析任务
+        master.after(100, self.start_parsing)
+
+    def start_parsing(self):
+        """启动解析任务"""
+        thread1 = threading.Thread(target=self.parse_huma)
+        thread1.start()
+        self.check_threads(thread1)
+
+    def check_threads(self, thread1: threading.Thread):
+        """检查线程状态
+
+        Args:
+            thread1 (threading.Thread): 线程
+        """
+        if thread1.is_alive():
+            # 使用 after 检查线程状态
+            self.master.after(100, lambda: self.check_threads(thread1))
+        else:
+            # 设置状态信息
+            self.status_var.set("解析码表完毕，等待操作中")
+
+    def parse_huma(self) -> None:
+        """解析虎码码表内容为编码字典"""
+        logger.debug("开始解析虎码码表")
+        # 读取所导入的其它码表名称
+        extended_lines = self.read_file(self.extended_file)
+        import_tables: list[str] = []
+        in_scope = False
+        for line in extended_lines:
+            item = line.strip()
+            if in_scope:
+                if item.startswith("- "):
+                    names = item.split(" ")
+                    import_tables.append(names[1])
+                else:
+                    in_scope = False
+                    break
+            elif item.startswith("import_tables:"):
+                in_scope = True
+
+        logger.info(
+            "读取到 {size} 个其它码表名称，分别为: {name}",
+            size=len(import_tables),
+            name=" ".join(import_tables),
+        )
+
+        # 解析所导入的其它码表文件
+        for table in import_tables:
+            table_file = os.path.join(self.work_dir, table + ".dict.yaml")
+            if os.path.exists(table_file):
+                parse_lines(
+                    self.simple_dict, self.code_dict, self.read_file(table_file), table
+                )
+                logger.info("解析码表文件： {}", table_file)
+            else:
+                logger.warning("没有找到码表文件: {}", table_file)
+
+        # 解析用户扩展码表文件
+        parse_lines(
+            self.simple_dict,
+            self.code_dict,
+            extended_lines,
+            "tigress.extended",
+        )
+        logger.info("解析用户扩展码表文件: {}", self.extended_file)
+
+        logger.info(
+            "解析完毕，读取到 {simple} 个单字，读取到 {code} 组编码",
+            simple=len(self.simple_dict),
+            code=len(self.code_dict),
+        )
+
+        # ? 补充字母表，以支持编码包含字母的词条
+        letters = "abcdefghijklmnopqrstuvwxyz"
+        for ch in letters:
+            self.simple_dict[ch] = ch
+            self.simple_dict[ch.upper()] = ch
 
     def encode(self, _event=None) -> None:
         """编码词条
@@ -423,6 +500,35 @@ class App:
             logger.error("值错误: {}", file_path)
         return False
 
+    def read_file(self, path: str) -> list[str]:
+        """读取文件至列表，行尾不含换行符，自动过滤掉空行和以 `#` 开头的项。
+
+        Args:
+            path (str): 文件路径
+
+        Returns:
+            list[str]: 行内容列表
+        """
+        try:
+            with io.open(path, mode="r", encoding="utf-8") as f:
+                read_list = f.read().splitlines()  # 不读入行尾的换行符
+                filtered_list = [
+                    item for item in read_list if item and not item.startswith("#")
+                ]
+                return filtered_list
+        except FileExistsError:
+            logger.error("尝试处理不存在的文件: {}", path)
+        except PermissionError:
+            logger.error("没有权限访问该文件: {}", path)
+        except IOError:
+            logger.error("I/O 错误: {}", path)
+        except OSError:
+            logger.error("操作系统错误: {}", path)
+        except ValueError:
+            logger.error("值错误: {}", path)
+
+        return []
+
     def mod_state(self):
         """获取执行状态
 
@@ -430,36 +536,6 @@ class App:
             bool: `Ture` 表示有实际插入词条
         """
         return self.mod
-
-
-def read_file(path: str) -> list[str]:
-    """读取文件至列表，行尾不含换行符，自动过滤掉空行和以 `#` 开头的项。
-
-    Args:
-        path (str): 文件路径
-
-    Returns:
-        list[str]: 行内容列表
-    """
-    try:
-        with io.open(path, mode="r", encoding="utf-8") as f:
-            read_list = f.read().splitlines()  # 不读入行尾的换行符
-            filtered_list = [
-                item for item in read_list if item and not item.startswith("#")
-            ]
-            return filtered_list
-    except FileExistsError:
-        logger.error("尝试处理不存在的文件: {}", path)
-    except PermissionError:
-        logger.error("没有权限访问该文件: {}", path)
-    except IOError:
-        logger.error("I/O 错误: {}", path)
-    except OSError:
-        logger.error("操作系统错误: {}", path)
-    except ValueError:
-        logger.error("值错误: {}", path)
-
-    return []
 
 
 def str_to_int(input: str):
@@ -590,69 +666,12 @@ if __name__ == "__main__":
         logger.warning("缺失必要文件，程序结束运行，退出代码: {}", 1)
         sys.exit(1)  #! 退出程序
 
-    extended_lines = read_file(tigress_extended_dict_yaml)
-
-    # 读取所导入的其它码表名称
-    import_tables: list[str] = []
-    in_scope = False
-    for line in extended_lines:
-        item = line.strip()
-        if in_scope:
-            if item.startswith("- "):
-                names = item.split(" ")
-                import_tables.append(names[1])
-            else:
-                in_scope = False
-                break
-        elif item.startswith("import_tables:"):
-            in_scope = True
-
-    logger.info(
-        "读取到 {size} 个其它码表名称，分别为: {name}",
-        size=len(import_tables),
-        name=" ".join(import_tables),
-    )
-
-    # 解析所导入的其它码表文件
-    simple_dict: dict[str, str] = {}
-    code_dict: dict[str, list[CodeUnit]] = {}
-    for table in import_tables:
-        table_file = os.path.join(work_dir, table + ".dict.yaml")
-        if os.path.exists(table_file):
-            parse_lines(simple_dict, code_dict, read_file(table_file), table)
-            logger.info("解析码表文件： {}", table_file)
-        else:
-            logger.warning("没有找到码表文件: {}", table_file)
-
-    # 解析用户扩展码表文件
-    parse_lines(
-        simple_dict,
-        code_dict,
-        read_file(tigress_extended_dict_yaml),
-        "tigress.extended",
-    )
-    logger.info("解析用户扩展码表文件: {}", tigress_extended_dict_yaml)
-
-    logger.info(
-        "解析完毕，读取到 {simple} 个单字，读取到 {code} 组编码",
-        simple=len(simple_dict),
-        code=len(code_dict),
-    )
-
-    # ? 补充字母表，以支持编码包含字母的词条
-    letters = "abcdefghijklmnopqrstuvwxyz"
-    for ch in letters:
-        simple_dict[ch] = ch
-        simple_dict[ch.upper()] = ch
-
-    py_c_dict_yaml = os.path.join(work_dir, "PY_c.dict.yaml")
-
+    logger.info("显示程序窗口")
     # 创建主窗口
     root = tk.Tk()
-    app = App(root, simple_dict, code_dict, tigress_extended_dict_yaml, py_c_dict_yaml)
+    app = App(root, work_dir, tigress_extended_dict_yaml)
 
     # 运行主循环
-    logger.info("显示程序窗口")
     root.mainloop()
     exit_code = 3
     if app.mod_state():

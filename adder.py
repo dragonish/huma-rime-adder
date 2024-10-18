@@ -303,6 +303,11 @@ class App:
         if len(code) == 0:
             self.status_var.set("请在编码框输入编码")
             return
+
+        if code in self.code_dict:
+            self.new_weight_var.set("0")
+        else:
+            self.new_weight_var.set("10")
         self.set_listbox_by_code(code)
 
     def get_code(self, simple: str, code_size: int):

@@ -334,7 +334,7 @@ class App:
             str: 空格分隔的拼音编码
         """
         py_list = lazy_pinyin(word, strict=False)
-        return " ".join(py_list).lower()
+        return " ".join([p for p in py_list if p.isalpha()]).lower()
 
     def set_listbox_by_code(self, code: str) -> None:
         """设置重码列表的内容

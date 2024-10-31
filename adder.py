@@ -42,8 +42,10 @@ class App:
         self.work_dir = work_dir
         self.extended_file = extended_file
         self.pinyin_file = os.path.join(self.work_dir, "PY_c.dict.yaml")
+        self.core_file = os.path.join(self.work_dir, "core2022.dict.yaml")
         self.simple_dict: dict[str, str] = {}
         self.code_dict: dict[str, list[CodeUnit]] = {}
+        self.core_set: set[str] = set()
         self.mod = False  # 标识是否实际插入过词条
 
         master.title("虎码秃版加词器")
@@ -55,7 +57,6 @@ class App:
         # 创建标签和输入框
         tk.Label(main_frame, text="新词:").grid(row=0, column=0)
         self.new_word_var = tk.StringVar()
-
         word_frame = tk.Frame(main_frame)
         word_frame.grid(row=0, column=1)
         new_word_entry = tk.Entry(word_frame, width=15, textvariable=self.new_word_var)
@@ -65,6 +66,10 @@ class App:
         tk.Button(word_frame, text="编码", command=self.encode).grid(
             row=0, column=2, padx=2
         )
+
+        # 字集范围状态展示
+        self.range_status_var = tk.StringVar()
+        tk.Label(main_frame, textvariable=self.range_status_var).grid(row=0, column=2)
 
         button_frame = tk.Frame(main_frame)
         button_frame.grid(row=0, column=3)
@@ -222,6 +227,41 @@ class App:
             self.simple_dict[ch] = ch
             self.simple_dict[ch.upper()] = ch
 
+        # 解析字集码表
+        self.parse_core()
+
+    def parse_core(self) -> None:
+        """解析字集码表内容为字集集合"""
+        logger.debug("开始解析字集码表")
+        if not os.path.exists(self.core_file):
+            logger.warning("没有找到字集码表文件: {}", self.core_file)
+            return
+
+        core_lines = self.read_file(self.core_file)
+        for line in core_lines:
+            item = line.strip()
+            fields = item.split("\t")
+            if len(fields) != 2:
+                continue
+            word = fields[0]
+            self.core_set.add(word)
+
+        logger.info(
+            "解析完毕，读取到 {} 个字",
+            len(self.core_set),
+        )
+
+        # * 补充一些字母与符号
+        letters = "abcdefghijklmnopqrstuvwxyz"
+        for ch in letters:
+            self.core_set.add(ch)
+            self.core_set.add(ch.upper())
+        punctuations = (
+            "!@#$%^&*()-=_+,.！？￥、，。“”‘’\"':;<>《》—…：；（）『』「」〖〗~|"
+        )
+        for p in punctuations:
+            self.core_set.add(p)
+
     def encode(self, _event=None) -> None:
         """编码词条
 
@@ -230,6 +270,7 @@ class App:
         """
         new_word = self.new_word_var.get()
         new_word_len = len(new_word)
+        self.range_status_var.set("")
         if new_word_len == 0:
             self.status_var.set("请输入要添加的词条")
             return
@@ -283,14 +324,21 @@ class App:
         else:
             self.new_weight_var.set("0")
         new_pinyin = self.get_pinyin(new_word)
+        range_state = self.get_range(new_word)
         self.new_code_var.set(new_code)
         self.pinyin_code_var.set(new_pinyin)
         self.set_listbox_by_code(new_code)
+        if range_state:
+            self.range_status_var.set("常用")
+        else:
+            self.range_status_var.set("全集")
+
         logger.debug(
-            "新词: {word} | 编码: {code} | 拼音: {pinyin}",
+            "新词: {word} | 编码: {code} | 拼音: {pinyin} | 属于常用字集: {range}",
             word=new_word,
             code=new_code,
             pinyin=new_pinyin,
+            range=range_state,
         )
 
     def query(self, _event=None) -> None:
@@ -324,6 +372,20 @@ class App:
             return self.simple_dict[simple][0:code_size]
         return ""
 
+    def get_range(self, word: str) -> bool:
+        """获取词条所属的字集范围
+
+        Args:
+            word (str): 词条
+
+        Returns:
+            bool: True 表示属于常用字集范围，否则为全集
+        """
+        for ch in word:
+            if not ch in self.core_set:
+                return False
+        return True
+
     def get_pinyin(self, word: str):
         """获取词条拼音
 
@@ -347,8 +409,14 @@ class App:
             # 降序排序
             self.code_dict[code].sort(key=lambda item: item["weight"], reverse=True)
             for item in self.code_dict[code]:
+                range_state = self.get_range(item["word"])
+                range_str = "常用"
+                if not range_state:
+                    range_str = "全集"
+
                 self.listbox.insert(
-                    "end", f"{item["word"]}    {item['weight']}    {item['source']}"
+                    "end",
+                    f"{item["word"]}    {item['weight']}    {item['source']}    {range_str}",
                 )
         else:
             self.listbox.insert("end", "居然是零耶")
@@ -510,7 +578,7 @@ class App:
         return False
 
     def read_file(self, path: str) -> list[str]:
-        """读取文件至列表，行尾不含换行符，自动过滤掉空行和以 `#` 开头的项。
+        """读取文件至列表，行尾不含换行符，自动过滤掉空行和以 `#` 开头的项
 
         Args:
             path (str): 文件路径
@@ -548,7 +616,7 @@ class App:
 
 
 def str_to_int(input: str):
-    """将字符串转换为整数，若无法转换则返回 `0`。
+    """将字符串转换为整数，若无法转换则返回 `0`
 
     Args:
         input (str): 待转换字符串
@@ -583,7 +651,7 @@ def parse_lines(
     lines: list[str],
     table_name: str,
 ) -> None:
-    """解析行内容列表为码表字典。
+    """解析行内容列表为码表字典
 
     Args:
         simple_dict (dict[str, str]): 单字字典

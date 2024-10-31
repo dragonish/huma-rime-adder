@@ -588,7 +588,7 @@ def parse_lines(
     Args:
         simple_dict (dict[str, str]): 单字字典
         code_dict (dict[str, CodeUnit]): 编码字典
-        word_lines (list[str]): 行内容列表
+        lines (list[str]): 行内容列表
         table_name (str): 码表名称
     """
     columns_dict: Columns = {}

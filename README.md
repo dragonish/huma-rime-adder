@@ -68,7 +68,7 @@ python adder.py
 ## 命令
 
 ```bash
-usage: adder.py [-h] [-l] [-w WORK]
+usage: adder.py [-h] [-l] [-w WORK] [-t]
 
 虎码秃版加词器
 
@@ -76,6 +76,7 @@ options:
   -h, --help            show this help message and exit
   -l, --log             记录日志
   -w WORK, --work WORK  自定义工作目录
+  -t, --three           在添加三字词后自动尝试编码三简词
 ```
 
 程序退出代码：

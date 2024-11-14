@@ -30,6 +30,7 @@ class App:
         master: tk.Tk,
         work_dir: str,
         extended_file: str,
+        three: bool,
     ) -> None:
         """构造器
 
@@ -37,10 +38,12 @@ class App:
             master (tk.Tk): Tkinter 窗口对象
             work_dir (str): 工作目录
             extended_file (str): 用户扩展码表文件路径
+            three (bool): 自动编码三简词
         """
         self.master = master
         self.work_dir = work_dir
         self.extended_file = extended_file
+        self.three = three
         self.pinyin_file = os.path.join(self.work_dir, "PY_c.dict.yaml")
         self.core_file = os.path.join(self.work_dir, "core2022.dict.yaml")
         self.simple_dict: dict[str, str] = {}
@@ -510,13 +513,26 @@ class App:
         if close:
             self.master.destroy()
         else:
-            self.new_word_var.set("")
-            self.new_code_var.set("")
+            self.listbox.delete(0, "end")
             self.new_weight_var.set("0")
+            # ? 自动编码三简词
+            if self.three and len(new_word) == 3 and len(new_code) == 4:
+                three_code = new_code[:3]
+                self.new_code_var.set(three_code)
+                if not three_code in self.code_dict:
+                    self.new_weight_var.set("10")
+                self.set_listbox_by_code(three_code)
+                self.status_var.set("已插入新词条并自动编码三简词")
+                logger.debug(
+                    "三简词: {word} | 编码: {code}", word=new_word, code=three_code
+                )
+            else:
+                self.new_word_var.set("")
+                self.new_code_var.set("")
+                self.status_var.set("已向码表文件插入新词条")
+
             self.pinyin_code_var.set("")
             self.pinyin_weight_var.set("0")
-            self.listbox.delete(0, "end")
-            self.status_var.set("已向码表文件插入新词条")
 
     def append_line_to_file(self, file_path: str, word: str, code: str, weight: int):
         """在指定文件的末尾添加行内容
@@ -719,6 +735,9 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="虎码秃版加词器")
     ap.add_argument("-l", "--log", action="store_true", help="记录日志")
     ap.add_argument("-w", "--work", required=False, help="自定义工作目录")
+    ap.add_argument(
+        "-t", "--three", action="store_true", help="在添加三字词后自动尝试编码三简词"
+    )
 
     args = vars(ap.parse_args())
     if args["log"]:
@@ -743,10 +762,13 @@ if __name__ == "__main__":
         logger.warning("缺失必要文件，程序结束运行，退出代码: {}", 1)
         sys.exit(1)  #! 退出程序
 
+    if args["three"]:
+        logger.info("已启用在添加三字词后自动尝试编码三简词")
+
     logger.info("显示程序窗口")
     # 创建主窗口
     root = tk.Tk()
-    app = App(root, work_dir, tigress_extended_dict_yaml)
+    app = App(root, work_dir, tigress_extended_dict_yaml, args["three"])
 
     # 运行主循环
     root.mainloop()

@@ -29,7 +29,6 @@ class App:
         self,
         master: tk.Tk,
         work_dir: str,
-        extended_file: str,
         three: bool,
     ) -> None:
         """构造器
@@ -37,13 +36,13 @@ class App:
         Args:
             master (tk.Tk): Tkinter 窗口对象
             work_dir (str): 工作目录
-            extended_file (str): 用户扩展码表文件路径
-            three (bool): 自动编码三简词
+            three (bool): 自动编码三简词以及允许插入简词表
         """
         self.master = master
         self.work_dir = work_dir
-        self.extended_file = extended_file
         self.three = three
+        self.extended_file = os.path.join(self.work_dir, "tigress.extended.dict.yaml")
+        self.simp_file = os.path.join(self.work_dir, "tigress_simp_ci.dict.yaml")
         self.pinyin_file = os.path.join(self.work_dir, "PY_c.dict.yaml")
         self.core_file = os.path.join(self.work_dir, "core2022.dict.yaml")
         self.simple_dict: dict[str, str] = {}
@@ -444,46 +443,59 @@ class App:
 
         new_word = self.new_word_var.get()
         new_code = self.new_code_var.get()
+        new_weight = str_to_int(self.new_weight_var.get())
+        new_source = "tigress.extended"
+
         if new_word and new_code:
-            if os.path.exists(self.extended_file):
-                new_weight = str_to_int(self.new_weight_var.get())
+            is_simp = False  # 是否为简词
+            if self.three and len(new_word) > 1 and len(new_code) < 4:
+                is_simp = True
+
+            state = False
+            if is_simp and os.path.exists(self.simp_file):
+                # 插入简词表中
+                state = self.append_line_to_file(
+                    self.simp_file, new_word, new_code, new_weight
+                )
+                new_source = "tigress_simp_ci"
+            elif os.path.exists(self.extended_file):
                 state = self.append_line_to_file(
                     self.extended_file, new_word, new_code, new_weight
                 )
-
-                if not state:
-                    self.status_var.set("无法将新词条插入码表文件")
-                    return
-                self.mod = True
-
-                if not close:
-                    if new_code in self.code_dict:
-                        for unit in self.code_dict[new_code]:
-                            if new_word == unit["word"]:
-                                unit["weight"] = new_weight
-                                unit["source"] = "tigress.extended"
-                                exist = True
-                                break
-                        if not exist:
-                            self.code_dict[new_code].append(
-                                {
-                                    "word": new_word,
-                                    "weight": new_weight,
-                                    "source": "tigress.extended",
-                                }
-                            )
-                    else:
-                        self.code_dict[new_code] = [
-                            {
-                                "word": new_word,
-                                "weight": new_weight,
-                                "source": "tigress.extended",
-                            }
-                        ]
             else:
                 logger.error("没有找到用户扩展码表文件: {}", self.extended_file)
                 self.status_var.set("没有找到用户扩展码表文件")
                 return
+
+            if not state:
+                self.status_var.set("无法将新词条插入码表文件")
+                return
+            self.mod = True
+
+            if not close:
+                if new_code in self.code_dict:
+                    for unit in self.code_dict[new_code]:
+                        if new_word == unit["word"]:
+                            unit["weight"] = new_weight
+                            unit["source"] = new_source
+                            exist = True
+                            break
+                    if not exist:
+                        self.code_dict[new_code].append(
+                            {
+                                "word": new_word,
+                                "weight": new_weight,
+                                "source": new_source,
+                            }
+                        )
+                else:
+                    self.code_dict[new_code] = [
+                        {
+                            "word": new_word,
+                            "weight": new_weight,
+                            "source": new_source,
+                        }
+                    ]
         else:
             self.status_var.set("待添加的词条或编码内容为空")
             return
@@ -736,7 +748,10 @@ if __name__ == "__main__":
     ap.add_argument("-l", "--log", action="store_true", help="记录日志")
     ap.add_argument("-w", "--work", required=False, help="自定义工作目录")
     ap.add_argument(
-        "-t", "--three", action="store_true", help="在添加三字词后自动尝试编码三简词"
+        "-s",
+        "--simp",
+        action="store_true",
+        help="在添加三字词后自动尝试编码三简词，并允许将简词插入至简词表",
     )
 
     args = vars(ap.parse_args())
@@ -768,7 +783,7 @@ if __name__ == "__main__":
     logger.info("显示程序窗口")
     # 创建主窗口
     root = tk.Tk()
-    app = App(root, work_dir, tigress_extended_dict_yaml, args["three"])
+    app = App(root, work_dir, args["three"])
 
     # 运行主循环
     root.mainloop()

@@ -76,7 +76,7 @@ options:
   -h, --help            show this help message and exit
   -l, --log             记录日志
   -w WORK, --work WORK  自定义工作目录
-  -t, --three           在添加三字词后自动尝试编码三简词
+  -s, --simp            在添加三字词后自动尝试编码三简词，并允许将简词插入至简词表
 ```
 
 程序退出代码：

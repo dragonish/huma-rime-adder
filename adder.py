@@ -29,18 +29,18 @@ class App:
         self,
         master: tk.Tk,
         work_dir: str,
-        three: bool,
+        simp: bool,
     ) -> None:
         """构造器
 
         Args:
             master (tk.Tk): Tkinter 窗口对象
             work_dir (str): 工作目录
-            three (bool): 自动编码三简词以及允许插入简词表
+            simp (bool): 自动编码三简词以及允许插入简词表
         """
         self.master = master
         self.work_dir = work_dir
-        self.three = three
+        self.simp = simp
         self.extended_file = os.path.join(self.work_dir, "tigress.extended.dict.yaml")
         self.simp_file = os.path.join(self.work_dir, "tigress_simp_ci.dict.yaml")
         self.pinyin_file = os.path.join(self.work_dir, "PY_c.dict.yaml")
@@ -448,7 +448,7 @@ class App:
 
         if new_word and new_code:
             is_simp = False  # 是否为简词
-            if self.three and len(new_word) > 1 and len(new_code) < 4:
+            if self.simp and len(new_word) > 1 and len(new_code) < 4:
                 is_simp = True
 
             state = False
@@ -528,7 +528,7 @@ class App:
             self.listbox.delete(0, "end")
             self.new_weight_var.set("0")
             # ? 自动编码三简词
-            if self.three and len(new_word) == 3 and len(new_code) == 4:
+            if self.simp and len(new_word) == 3 and len(new_code) == 4:
                 three_code = new_code[:3]
                 self.new_code_var.set(three_code)
                 if not three_code in self.code_dict:
@@ -777,13 +777,13 @@ if __name__ == "__main__":
         logger.warning("缺失必要文件，程序结束运行，退出代码: {}", 1)
         sys.exit(1)  #! 退出程序
 
-    if args["three"]:
-        logger.info("已启用在添加三字词后自动尝试编码三简词")
+    if args["simp"]:
+        logger.info("已启用自动编码三简词及允许将简词插入至简词表")
 
     logger.info("显示程序窗口")
     # 创建主窗口
     root = tk.Tk()
-    app = App(root, work_dir, args["three"])
+    app = App(root, work_dir, args["simp"])
 
     # 运行主循环
     root.mainloop()

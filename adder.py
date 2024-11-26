@@ -134,6 +134,7 @@ class App:
         tk.Label(main_frame, text="重码:").grid(row=3, column=0)
         self.listbox = tk.Listbox(main_frame)
         self.listbox.grid(row=3, column=1, columnspan=3, sticky="ew")
+        self.listbox.bind("<Double-Button-1>", self.copy_to_clipboard)
 
         # 底部框架
         bottom_frame = tk.Frame(master)
@@ -359,6 +360,20 @@ class App:
         else:
             self.new_weight_var.set("10")
         self.set_listbox_by_code(code)
+
+    def copy_to_clipboard(self, event) -> None:
+        """复制重码列表的词条
+
+        Args:
+            event ([Event[Entry]]): event.
+        """
+        selected_item = self.listbox.get(self.listbox.curselection())
+        items = selected_item.split("    ")
+        if len(items) > 1:
+            # 清空剪贴板并添加选中项
+            self.master.clipboard_clear()
+            self.master.clipboard_append(items[0])
+            self.status_var.set("已复制词条: " + items[0])
 
     def get_code(self, simple: str, code_size: int):
         """获取单字的编码

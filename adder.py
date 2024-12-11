@@ -48,6 +48,11 @@ class App:
         self.simple_dict: dict[str, str] = {}
         self.code_dict: dict[str, list[CodeUnit]] = {}
         self.core_set: set[str] = set()
+        self.delete_chars_table = str.maketrans(
+            "",
+            "",
+            "!@#$%^&*()-=_+,.！？￥、，。“”‘’\"':;<>《》—…：；（）『』「」〖〗~|·",
+        )
         self.mod = False  # 标识是否实际插入过词条
 
         master.title("虎码秃版加词器")
@@ -259,11 +264,6 @@ class App:
         for ch in letters:
             self.core_set.add(ch)
             self.core_set.add(ch.upper())
-        punctuations = (
-            "!@#$%^&*()-=_+,.！？￥、，。“”‘’\"':;<>《》—…：；（）『』「」〖〗~|"
-        )
-        for p in punctuations:
-            self.core_set.add(p)
 
     def encode(self, _event=None) -> None:
         """编码词条
@@ -272,7 +272,8 @@ class App:
             _event (Event[Entry], optional): event. Defaults to None.
         """
         new_word = self.new_word_var.get()
-        new_word_len = len(new_word)
+        clean_word = self.get_clean_word(new_word)
+        new_word_len = len(clean_word)
         self.range_status_var.set("")
         if new_word_len == 0:
             self.status_var.set("请输入要添加的词条")
@@ -283,7 +284,7 @@ class App:
 
         if new_word_len == 1:
             # 单字
-            new_code = self.get_code(new_word, 4)
+            new_code = self.get_code(clean_word, 4)
 
             if new_code:
                 self.status_var.set("已编码此单字")
@@ -291,7 +292,7 @@ class App:
                 self.status_var.set("未收录的单字，请自行输入编码")
         elif new_word_len == 2:
             # 二字词组
-            new_code = self.get_code(new_word[0], 2) + self.get_code(new_word[1], 2)
+            new_code = self.get_code(clean_word[0], 2) + self.get_code(clean_word[1], 2)
             self.new_code_var.set(new_code)
             if new_code:
                 self.status_var.set("已编码此二字词组")
@@ -300,9 +301,9 @@ class App:
         elif new_word_len == 3:
             # 三字词组
             new_code = (
-                self.get_code(new_word[0], 1)
-                + self.get_code(new_word[1], 1)
-                + self.get_code(new_word[2], 2)
+                self.get_code(clean_word[0], 1)
+                + self.get_code(clean_word[1], 1)
+                + self.get_code(clean_word[2], 2)
             )
             self.new_code_var.set(new_code)
             if new_code:
@@ -312,10 +313,10 @@ class App:
         else:
             # 多字词组
             new_code = (
-                self.get_code(new_word[0], 1)
-                + self.get_code(new_word[1], 1)
-                + self.get_code(new_word[2], 1)
-                + self.get_code(new_word[-1], 1)
+                self.get_code(clean_word[0], 1)
+                + self.get_code(clean_word[1], 1)
+                + self.get_code(clean_word[2], 1)
+                + self.get_code(clean_word[-1], 1)
             )
             if new_code:
                 self.status_var.set("已编码此多字词组")
@@ -326,8 +327,8 @@ class App:
             self.new_weight_var.set("10")
         else:
             self.new_weight_var.set("0")
-        new_pinyin = self.get_pinyin(new_word)
-        range_state = self.get_range(new_word)
+        new_pinyin = self.get_pinyin(clean_word)
+        range_state = self.get_range(clean_word)
         self.new_code_var.set(new_code)
         self.pinyin_code_var.set(new_pinyin)
         self.set_listbox_by_code(new_code)
@@ -426,7 +427,7 @@ class App:
             # 降序排序
             self.code_dict[code].sort(key=lambda item: item["weight"], reverse=True)
             for item in self.code_dict[code]:
-                range_state = self.get_range(item["word"])
+                range_state = self.get_range(self.get_clean_word(item["word"]))
                 range_str = "常用"
                 if not range_state:
                     range_str = "全集"
@@ -457,13 +458,14 @@ class App:
         exist = False  # 为 True 时说明该词条被用于调频了
 
         new_word = self.new_word_var.get()
+        clean_word = self.get_clean_word(new_word)
         new_code = self.new_code_var.get()
         new_weight = str_to_int(self.new_weight_var.get())
         new_source = "tigress.extended"
 
-        if new_word and new_code:
+        if clean_word and new_code:
             is_simp = False  # 是否为简词
-            if self.simp and len(new_word) > 1 and len(new_code) < 4:
+            if self.simp and len(clean_word) > 1 and len(new_code) < 4:
                 is_simp = True
 
             state = False
@@ -543,7 +545,7 @@ class App:
             self.listbox.delete(0, "end")
             self.new_weight_var.set("0")
             # ? 自动编码三简词
-            if self.simp and len(new_word) == 3 and len(new_code) == 4:
+            if self.simp and len(clean_word) == 3 and len(new_code) == 4:
                 three_code = new_code[:3]
                 self.new_code_var.set(three_code)
                 if not three_code in self.code_dict:
@@ -656,6 +658,17 @@ class App:
             bool: `Ture` 表示有实际插入词条
         """
         return self.mod
+
+    def get_clean_word(self, word: str) -> str:
+        """获取不带符号的字符串
+
+        Args:
+            word (str): 源字符串
+
+        Returns:
+            str: 不带符号的字符串
+        """
+        return word.translate(self.delete_chars_table)
 
 
 def str_to_int(input: str):

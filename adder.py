@@ -181,7 +181,7 @@ class App:
     def parse_huma(self) -> None:
         """解析虎码码表内容为编码字典"""
         logger.debug("开始解析虎码码表")
-        # 读取所导入的其它码表名称
+        # 读取所导入的其他码表名称
         extended_lines = self.read_file(self.extended_file)
         import_tables: list[str] = []
         in_scope = False
@@ -198,12 +198,12 @@ class App:
                 in_scope = True
 
         logger.info(
-            "读取到 {size} 个其它码表名称，分别为: {name}",
+            "读取到 {size} 个其他码表名称，分别为: {name}",
             size=len(import_tables),
             name=" ".join(import_tables),
         )
 
-        # 解析所导入的其它码表文件
+        # 解析所导入的其他码表文件
         for table in import_tables:
             table_file = os.path.join(self.work_dir, table + ".dict.yaml")
             if os.path.exists(table_file):

@@ -616,8 +616,6 @@ class App:
             logger.error("没有权限访问该文件: {}", file_path)
         except IOError:
             logger.error("I/O 错误: {}", file_path)
-        except OSError:
-            logger.error("操作系统错误: {}", file_path)
         except ValueError:
             logger.error("值错误: {}", file_path)
         return False
@@ -644,8 +642,6 @@ class App:
             logger.error("没有权限访问该文件: {}", path)
         except IOError:
             logger.error("I/O 错误: {}", path)
-        except OSError:
-            logger.error("操作系统错误: {}", path)
         except ValueError:
             logger.error("值错误: {}", path)
 

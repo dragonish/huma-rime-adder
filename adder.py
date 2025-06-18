@@ -711,7 +711,7 @@ def parse_lines(
         lines (list[str]): 行内容列表
         table_name (str): 码表名称
     """
-    columns_dict: Columns = {}
+    columns_dict: Columns = {"text": 0, "code": 0, "weight": 0}
     in_header = True
     columns_scope = False
     for line in lines:

@@ -7,7 +7,7 @@ import sys
 import argparse
 import threading
 import tkinter as tk
-from typing import TypedDict
+from typing import TypedDict, cast, Iterable
 from loguru import logger
 from pypinyin import lazy_pinyin
 
@@ -689,11 +689,11 @@ def parse_columns(columns: Columns, line: str) -> None:
         line (str): 行内容
     """
     if line.startswith("- text"):
-        columns["text"] = len(columns)
+        columns["text"] = max(cast(Iterable[int], columns.values())) + 1
     elif line.startswith("- code"):
-        columns["code"] = len(columns)
+        columns["code"] = max(cast(Iterable[int], columns.values())) + 1
     elif line.startswith("- weight"):
-        columns["weight"] = len(columns)
+        columns["weight"] = max(cast(Iterable[int], columns.values())) + 1
 
 
 @logger.catch
@@ -711,7 +711,7 @@ def parse_lines(
         lines (list[str]): 行内容列表
         table_name (str): 码表名称
     """
-    columns_dict: Columns = {"text": 0, "code": 0, "weight": 0}
+    columns_dict: Columns = {"text": -1, "code": -1, "weight": -1}
     in_header = True
     columns_scope = False
     for line in lines:
@@ -726,9 +726,10 @@ def parse_lines(
                 continue
 
             if columns_scope:
-                parse_columns(columns_dict, item)
-                if len(columns_dict) == 3:
+                if item.count(":") > 1:
                     columns_scope = False
+                    continue
+                parse_columns(columns_dict, item)
         else:
             fields = item.split("\t")
             if len(fields) < 3:

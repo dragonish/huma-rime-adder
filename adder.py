@@ -726,7 +726,7 @@ def parse_lines(
                 continue
 
             if columns_scope:
-                if item.count(":") > 1:
+                if item.count(":") > 0:
                     columns_scope = False
                     continue
                 parse_columns(columns_dict, item)

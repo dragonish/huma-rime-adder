@@ -25,23 +25,23 @@
 
 2. 下载或者克隆(*需要安装 [git](https://git-scm.com/downloads)*)项目至本地：
 
-```bash
-# 克隆项目
-git clone https://github.com/dragonish/huma-rime-adder.git
+    ```bash
+    # 克隆项目
+    git clone https://github.com/dragonish/huma-rime-adder.git
 
-# 进入项目目录
-cd huma-rime-adder
-```
+    # 进入项目目录
+    cd huma-rime-adder
+    ```
 
 3. 运行以下命令安装程序依赖：
 
-```bash
-# 通过依赖文件安装
-python -m pip install -r requirements.txt
+    ```bash
+    # 通过依赖文件安装
+    python -m pip install -r requirements.txt
 
-# 或者手动安装
-python -m pip install loguru pypinyin
-```
+    # 或者手动安装
+    python -m pip install loguru pypinyin
+    ```
 
 ## 用法
 

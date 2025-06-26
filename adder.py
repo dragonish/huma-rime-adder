@@ -255,7 +255,7 @@ class App:
             self.core_set.add(word)
 
         logger.info(
-            "解析完毕，读取到 {} 个字",
+            "解析完毕，读取到 {} 个常用字",
             len(self.core_set),
         )
 

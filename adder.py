@@ -324,7 +324,7 @@ class App:
                 self.status_var.set("无法编码此多字词组，请自行输入编码")
 
         if new_code and not new_code in self.code_dict:
-            self.new_weight_var.set("10")
+            self.new_weight_var.set("255")
         else:
             self.new_weight_var.set("0")
         new_pinyin = self.get_pinyin(clean_word)
@@ -359,7 +359,7 @@ class App:
         if code in self.code_dict:
             self.new_weight_var.set("0")
         else:
-            self.new_weight_var.set("10")
+            self.new_weight_var.set("255")
         self.set_listbox_by_code(code)
 
     def copy_to_clipboard(self, event) -> None:
@@ -445,9 +445,10 @@ class App:
         if code and code in self.code_dict:
             # 降序排序
             self.code_dict[code].sort(key=lambda item: item["weight"], reverse=True)
-            self.new_weight_var.set(f"1{self.code_dict[code][0]["weight"]}")
+            top = self.code_dict[code][0]["weight"] + 512
+            self.new_weight_var.set(str(top))
         else:
-            self.new_weight_var.set("100")
+            self.new_weight_var.set("512")
 
     def add(self, close: bool) -> None:
         """添加新的词条
@@ -549,7 +550,7 @@ class App:
                 three_code = new_code[:3]
                 self.new_code_var.set(three_code)
                 if not three_code in self.code_dict:
-                    self.new_weight_var.set("10")
+                    self.new_weight_var.set("255")
                 self.set_listbox_by_code(three_code)
                 self.status_var.set("已插入新词条并自动编码三简词")
                 logger.debug(

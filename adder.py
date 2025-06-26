@@ -24,6 +24,12 @@ class Columns(TypedDict):
     weight: int
 
 
+class CacheUnit(TypedDict):
+    word: str
+    code: str
+    weight: int | str
+
+
 class App:
     def __init__(
         self,
@@ -53,7 +59,11 @@ class App:
             "",
             "!@#$%^&*()-=_+,.！？￥、，。“”‘’\"':;<>《》—…：；（）『』「」〖〗~|·",
         )
-        self.mod = False  # 标识是否实际插入过词条
+
+        self.extended_cached: list[CacheUnit] = []
+        self.simp_cached: list[CacheUnit] = []
+        self.pinyin_cached: list[CacheUnit] = []
+        self.pinyin_set: set[str] = set([])
 
         master.title("虎码秃版加词器")
 
@@ -265,6 +275,45 @@ class App:
             self.core_set.add(ch)
             self.core_set.add(ch.upper())
 
+    def parse_pinyin(self, lines: list[str]) -> None:
+        """解析拼音码表内容为拼音集合
+
+        Args:
+            lines (list[str]): 拼音码表行内容
+        """
+        logger.debug("开始解析和处理拼音码表")
+        columns_dict: Columns = {"text": -1, "code": -1, "weight": -1}
+        in_header = True
+        columns_scope = False
+        for line in lines:
+            item = line.strip()
+            if in_header:
+                if item == "...":
+                    in_header = False
+                    continue
+
+                if item == "columns:":
+                    columns_scope = True
+                    continue
+
+                if columns_scope:
+                    if item.count(":") > 0:
+                        columns_scope = False
+                        continue
+                    parse_columns(columns_dict, item)
+            else:
+                fields = item.split("\t")
+                if len(fields) < 2:
+                    continue
+                word = fields[columns_dict["text"]]
+
+                if len(word) > 1:
+                    self.pinyin_set.add(word)
+
+        self.pinyin_cached = [
+            item for item in self.pinyin_cached if not item["word"] in self.pinyin_set
+        ]
+
     def encode(self, _event=None) -> None:
         """编码词条
 
@@ -469,26 +518,20 @@ class App:
             if self.simp and len(clean_word) > 1 and len(new_code) < 4:
                 is_simp = True
 
-            state = False
             if is_simp and os.path.exists(self.simp_file):
-                # 插入简词表中
-                state = self.append_line_to_file(
-                    self.simp_file, new_word, new_code, new_weight
+                # 缓存至简词表中
+                self.simp_cached.append(
+                    {"word": new_word, "code": new_code, "weight": new_weight}
                 )
                 new_source = "tigress_simp_ci"
             elif os.path.exists(self.extended_file):
-                state = self.append_line_to_file(
-                    self.extended_file, new_word, new_code, new_weight
+                self.extended_cached.append(
+                    {"word": new_word, "code": new_code, "weight": new_weight}
                 )
             else:
                 logger.error("没有找到用户扩展码表文件: {}", self.extended_file)
                 self.status_var.set("没有找到用户扩展码表文件")
                 return
-
-            if not state:
-                self.status_var.set("无法将新词条插入码表文件")
-                return
-            self.mod = True
 
             if not close:
                 if new_code in self.code_dict:
@@ -534,8 +577,8 @@ class App:
             else:
                 if os.path.exists(self.pinyin_file):
                     pinyin_weight = str_to_int(self.pinyin_weight_var.get())
-                    self.append_line_to_file(
-                        self.pinyin_file, new_word, pinyin_code, pinyin_weight
+                    self.pinyin_cached.append(
+                        {"word": new_word, "code": pinyin_code, "weight": pinyin_weight}
                     )
                 else:
                     logger.warning("没有找到拼音码表文件: {}", self.pinyin_file)
@@ -564,15 +607,12 @@ class App:
             self.pinyin_code_var.set("")
             self.pinyin_weight_var.set("0")
 
-    def append_line_to_file(self, file_path: str, word: str, code: str, weight: int):
+    def append_lines_to_file(self, file_path: str, cached: list[CacheUnit]):
         """在指定文件的末尾添加行内容
 
         Args:
             file_path (str): 文件路径
-            word (str): 词条内容
-            code (str): 编码内容
-            weight (int): 权重值
-
+            cached (list[CacheUnit]): 缓存单元
         Returns:
             bool: 是否执行成功
         """
@@ -583,17 +623,14 @@ class App:
                 for line in f:
                     item = line.strip()
                     if item.startswith("- text"):
-                        input_list.append(word)
+                        input_list.append("{text}")
                     elif item.startswith("- code"):
-                        input_list.append(code)
+                        input_list.append("{code}")
                     elif item.startswith("- weight"):
-                        input_list.append(str(weight))
+                        input_list.append("{weight}")
                     elif item == "...":
                         break
-
-                    if len(input_list) == 3:
-                        break
-                input = "\t".join(input_list)
+                format_str = "\t".join(input_list)
 
                 f.seek(0)
                 content = f.read()
@@ -602,16 +639,22 @@ class App:
                 f.seek(0, 2)
 
                 # 检查最后一行是否以换行符结束
-                if content.endswith("\n"):
-                    f.write(input)
-                else:
-                    f.write("\n" + input)
+                if not content.endswith("\n"):
+                    f.write("\n")
 
-                logger.info(
-                    "向码表文件 {table} 插入新行: {input}",
-                    table=file_path,
-                    input=input,
-                )
+                for cache in cached:
+                    input = format_str.format(
+                        text=cache["word"],
+                        code=cache["code"],
+                        weight=cache["weight"],
+                    )
+                    f.write(input + "\n")
+                    logger.info(
+                        "向码表文件 {table} 插入新行: {input}",
+                        table=file_path,
+                        input=input,
+                    )
+
                 return True
         except PermissionError:
             logger.error("没有权限访问该文件: {}", file_path)
@@ -648,14 +691,6 @@ class App:
 
         return []
 
-    def mod_state(self):
-        """获取执行状态
-
-        Returns:
-            bool: `Ture` 表示有实际插入词条
-        """
-        return self.mod
-
     def get_clean_word(self, word: str) -> str:
         """获取不带符号的字符串
 
@@ -666,6 +701,28 @@ class App:
             str: 不带符号的字符串
         """
         return word.translate(self.delete_chars_table)
+
+    def writer(self) -> bool:
+        """写入器
+
+        Returns:
+            bool: 是否有实际写入内容
+        """
+        write_state = False
+
+        if len(self.extended_cached) > 0:
+            if self.append_lines_to_file(self.extended_file, self.extended_cached):
+                write_state = True
+        if len(self.simp_cached) > 0:
+            if self.append_lines_to_file(self.simp_file, self.simp_cached):
+                write_state = True
+        if len(self.pinyin_cached) > 0:
+            self.parse_pinyin(self.read_file(self.pinyin_file))
+            if len(self.pinyin_cached) > 0:
+                if self.append_lines_to_file(self.pinyin_file, self.pinyin_cached):
+                    write_state = True
+
+        return write_state
 
 
 def str_to_int(input: str):
@@ -814,7 +871,7 @@ if __name__ == "__main__":
     # 运行主循环
     root.mainloop()
     exit_code = 3
-    if app.mod_state():
+    if app.writer():
         exit_code = 0
     logger.info("程序结束运行，退出代码: {}", exit_code)
     sys.exit(exit_code)

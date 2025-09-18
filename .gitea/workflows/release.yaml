@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      HTTP_PROXY: ${{ vars.PROXY }}
+      HTTPS_PROXY: ${{ vars.PROXY }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Get git tags
+        id: git_tags
+        run: |
+          current=$(git describe --abbrev=0 --tags)
+          echo "current=${current}" >> ${GITHUB_OUTPUT}
+          prev=$(git describe --abbrev=0 --tags `git rev-list --tags --skip=1 --max-count=1`)
+          echo "prev=${prev}" >> ${GITHUB_OUTPUT}
+      - name: Create changelog text
+        id: changelog_text
+        uses: dragonish/tag-changelog@v1
+        with:
+          token: ${{ secrets.ACCESS_TOKEN }}
+          config_file: ../.gitea/scripts/tag-changelog-config.cjs
+      - name: Create release
+        uses: akkuman/gitea-release-action@v1
+        env:
+          NODE_OPTIONS: '--experimental-fetch' # if nodejs < 18
+        with:
+          server_url: ${{ vars.SERVER }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          name: Release ${{ steps.git_tags.outputs.current }}
+          body: |
+            ${{ steps.changelog_text.outputs.changes }}
+
+            ---
+
+            ## 详情
+            
+            See: [${{ steps.git_tags.outputs.prev }}...${{ steps.git_tags.outputs.current }}](/compare/${{ steps.git_tags.outputs.prev }}...${{ steps.git_tags.outputs.current }}).
+      - name: Send notification
+        if: ${{ !cancelled() && vars.CHAT_URL != '' }}
+        uses: dragonish/send-to-synology-chat@v1
+        with:
+          webhook-url: ${{ vars.CHAT_URL }}
+          message: "${{ gitea.repository }}\n\n${{ steps.git_tags.outputs.current }}\n\n#${{ job.status }}"

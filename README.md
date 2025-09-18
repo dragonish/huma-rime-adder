@@ -1,25 +1,39 @@
-# huma-rime-adder
+# 猛击虎码加词器
 
-基于[虎码秃版](http://huma.ysepan.com/)方案的 Rime 加词器。
+基于[虎码秃版](http://huma.ysepan.com/)方案的 Rime 加词器，允许根据码表结构调整配置。
 
 ## 功能
 
-- 自动获取输入词条的编码和拼音。
+- 添加新词条或者为已有词条调频。
+- 自动编码输入词条及其拼音。
 - 查询编码所对应的重码项目。
-- 快速插入词条至用户扩展码表和拼音码表中。
-- 仅在文件末尾插入新词条，不改动文件原有内容。
+- 可选地编码英文单词。
+- 可选地编码简词。
+- 可选地添加或调整表情(Emoji)滤镜。
+- 可选地添加或调整符号(symbols)字典。
 
 ## 预览
 
 ### Windows
 
-![windows](./images/windows.png)
+<!-- markdownlint-disable MD033 -->
+<img src="./images/windows.jpg" alt="Windows" width="520" />
 
 ### macOS
 
-![macOS](./images/macos.png)
+![macOS](./images/macos.jpg)
 
-## 安装
+### Linux Mint
+
+![Linux Mint](./images/linux.png)
+
+## 运行
+
+### 运行打包的二进制文件
+
+前往 [Releases](https://github.com/dragonish/huma-rime-adder/releases) 下载对应平台的压缩包，解压并运行二进制文件即可。
+
+### 运行脚本源码
 
 1. 安装 [Python 3](https://www.python.org/downloads/)。
 
@@ -36,51 +50,45 @@
 3. 运行以下命令安装程序依赖：
 
     ```bash
-    # 通过依赖文件安装
     python -m pip install -r requirements.txt
+    ```
 
-    # 或者手动安装
-    python -m pip install loguru pypinyin
+4. 运行以下命令启动程序：
+
+    ```bash
+    python main.py
     ```
 
 ## 用法
 
-启动程序：
+### 启动命令
 
-```bash
-# 运行：
-python adder.py -w <码表文件所在目录>
+- `--log <log_level>`: 可选，设置日志级别。默认为 `INFO`。可选值有 `TRACE`、`DEBUG`、`INFO`、`WARNING` 和 `ERROR`。
+- `--work <work_dir>`: 可选，设置工作目录(码表文件所在目录)。默认为当前工作目录。
 
-# 或者将 adder.py 放置于码表文件所在目录下直接运行：
-python adder.py
-```
+### 配置文件
+
+可参照 `config.ini.template` 在程序目录下创建 `config.ini` 配置文件。
+
+优先级：命令行参数 > 配置文件 > 默认值。
+
+### 界面说明
 
 在"新词"输入框中输入要添加的新词条，点击"编码"按钮或者按下回车键则自动编码并查询重码情况。
 
-若需要添加简词，可以编辑"编码"输入框中的编码，然后点击"查询"按钮以查看此编码的重码情况(*重码列表中支持双击复制词条*)。
+若需要添加简词，可以编辑"编码"输入框中的编码，然后点击"查询"按钮以查看此编码的重码情况。
 
-可以根据重码情况或者调频需求(*基于用户扩展码表的高优先级特性可实现覆盖调整词频*)调整待插入词条的权重值。
+可以根据重码情况或者调频需求调整待插入词条的权重值。
 
-"仅添加"按钮在插入新词条后不关闭程序，以便连续添加；"添加"按钮则会在插入新词条后直接关闭程序。
+点击"添加"按钮将缓存新词条，可以连续添加多个词条。
 
-完成新词条的添加后重新部署输入法即可。
+关闭程序窗口后则会开始写入缓存的新词条至码表文件。若需要放弃此次修改，可切换至"其他"分页点击"强制退出"按钮。
 
-## 命令
+最后重新部署输入法即可。
 
-```bash
-usage: adder.py [-h] [-l] [-w WORK] [-t]
-
-虎码秃版加词器
-
-options:
-  -h, --help            show this help message and exit
-  -l, --log             记录日志
-  -w WORK, --work WORK  自定义工作目录
-  -s, --simp            在添加三字词后自动尝试编码三简词，并允许将简词插入至简词表
-```
-
-程序退出代码：
+### 程序退出代码
 
 - `0` 表示程序正常退出。
 - `1` 表示程序异常退出。
-- `3` 表示程序正常退出但无实际操作。
+- `3` 表示程序正常退出但无实际写入文件操作。
+- `4` 表示程序强制退出。

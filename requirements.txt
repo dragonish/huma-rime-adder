@@ -1,2 +1,4 @@
-loguru==0.5.3
-pypinyin==0.53.0
+loguru==0.7.2
+pypinyin==0.55.0
+PyQt6==6.9.1
+pyqt6_sip==13.10.2

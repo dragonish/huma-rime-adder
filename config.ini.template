@@ -1,0 +1,40 @@
+[ARGS]
+; 日志级别
+log = INFO
+
+; 工作目录
+work = /path/to/your/work/directory
+
+[TIGRESS]
+; 主码表文件(扩展码表文件)
+main = tigress.extended.dict.yaml
+
+; 单字码表文件
+characters = tigress.dict.yaml
+
+; 词组码表文件
+phrases = tigress_ci.dict.yaml
+
+; 简词码表文件 (可选)
+simple = tigress_simp_ci.dict.yaml
+
+; 字集码表文件
+charset = core2022.dict.yaml
+
+; 英文码表文件 (可选)
+english = easy_english.dict.yaml
+
+; 拼音码表文件 (可选)
+pinyin = PY_c.dict.yaml
+
+; 拼音滤镜配置文件 (可选)
+pinyintip = opencc/PYPhrases.txt
+
+; Emoji 滤镜配置文件 (可选)
+emoji = opencc/emoji.txt
+
+; 原名滤镜配置文件 (可选)
+; name = 
+
+; 符号字典文件 (可选)
+symbols = symbols.yaml

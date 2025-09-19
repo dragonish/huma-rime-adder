@@ -15,6 +15,11 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+      - name: Get git tags
+        id: git_tags
+        run: |
+          current=$(git describe --abbrev=0 --tags)
+          echo "current=${current}" >> ${GITHUB_OUTPUT}
       - name: Set Up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -31,7 +36,7 @@ jobs:
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build
+          name: huma-rime-adder_windows_x64_v${{ steps.git_tags.outputs.current }}
           path: dist/huma-rime-adder/
   
   build-linux:
@@ -41,6 +46,11 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+      - name: Get git tags
+        id: git_tags
+        run: |
+          current=$(git describe --abbrev=0 --tags)
+          echo "current=${current}" >> ${GITHUB_OUTPUT}
       - name: Set Up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -57,16 +67,21 @@ jobs:
       - name: Upload Linux build
         uses: actions/upload-artifact@v4
         with:
-          name: linux-build
+          name: huma-rime-adder_linux_x64_v${{ steps.git_tags.outputs.current }}
           path: dist/huma-rime-adder/
   
   build-macos-intel:
-    runs-on: macos-latest
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           fetch-tags: true
+      - name: Get git tags
+        id: git_tags
+        run: |
+          current=$(git describe --abbrev=0 --tags)
+          echo "current=${current}" >> ${GITHUB_OUTPUT}
       - name: Set Up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -83,16 +98,21 @@ jobs:
       - name: Upload macOS Intel build
         uses: actions/upload-artifact@v4
         with:
-          name: macos-intel-build
+          name: huma-rime-adder_macos_intel_v${{ steps.git_tags.outputs.current }}
           path: dist/huma-rime-adder/
 
   build-macos-arm64:
-    runs-on: macos-arm64
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           fetch-tags: true
+      - name: Get git tags
+        id: git_tags
+        run: |
+          current=$(git describe --abbrev=0 --tags)
+          echo "current=${current}" >> ${GITHUB_OUTPUT}
       - name: Set Up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -109,7 +129,7 @@ jobs:
       - name: Upload macOS ARM64 build
         uses: actions/upload-artifact@v4
         with:
-          name: macos-arm64-build
+          name: huma-rime-adder_macos_arm64_v${{ steps.git_tags.outputs.current }}
           path: dist/huma-rime-adder/
   
   release:
@@ -135,22 +155,22 @@ jobs:
       - name: Download Windows build
         uses: actions/download-artifact@v5
         with:
-          name: windows-build
+          name: huma-rime-adder_windows_x64_v${{ steps.git_tags.outputs.current }}
           path: release/windows
       - name: Download Linux build
         uses: actions/download-artifact@v5
         with:
-          name: linux-build
+          name: huma-rime-adder_linux_x64_v${{ steps.git_tags.outputs.current }}
           path: release/linux
       - name: Download macOS Intel build
         uses: actions/download-artifact@v5
         with:
-          name: macos-intel-build
+          name: huma-rime-adder_macos_intel_v${{ steps.git_tags.outputs.current }}
           path: release/macos-intel
       - name: Download macOS ARM64 build
         uses: actions/download-artifact@v5
         with:
-          name: macos-arm64-build
+          name: huma-rime-adder_macos_arm64_v${{ steps.git_tags.outputs.current }}
           path: release/macos-arm64
       - name: Create release
         uses: ncipollo/release-action@v1

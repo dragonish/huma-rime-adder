@@ -152,7 +152,7 @@ jobs:
         uses: dragonish/tag-changelog@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          config_file: .github/scripts/tag-changelog-config.js
+          config_file: .github/scripts/tag-changelog-config.cjs
       - name: Download Windows build
         uses: actions/download-artifact@v5
         with:

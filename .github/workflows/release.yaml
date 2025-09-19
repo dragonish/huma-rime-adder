@@ -17,6 +17,7 @@ jobs:
           fetch-tags: true
       - name: Get git tags
         id: git_tags
+        shell: bash
         run: |
           current=$(git describe --abbrev=0 --tags)
           echo "current=${current}" >> ${GITHUB_OUTPUT}

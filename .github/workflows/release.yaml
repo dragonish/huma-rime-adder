@@ -175,6 +175,7 @@ jobs:
           path: release/macos-arm64
       - name: Create release
         uses: ncipollo/release-action@v1
+        tag: ${{ steps.git_tags.outputs.current }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           name: Release ${{ steps.git_tags.outputs.current }}

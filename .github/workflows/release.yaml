@@ -15,12 +15,6 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-      - name: Get git tags
-        id: git_tags
-        shell: bash
-        run: |
-          current=$(git describe --abbrev=0 --tags)
-          echo "current=${current}" >> ${GITHUB_OUTPUT}
       - name: Set Up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -37,7 +31,7 @@ jobs:
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
-          name: huma-rime-adder_windows_x64_${{ steps.git_tags.outputs.current }}
+          name: windows-build
           path: dist/huma-rime-adder/
   
   build-linux:
@@ -47,11 +41,6 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-      - name: Get git tags
-        id: git_tags
-        run: |
-          current=$(git describe --abbrev=0 --tags)
-          echo "current=${current}" >> ${GITHUB_OUTPUT}
       - name: Set Up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -68,7 +57,7 @@ jobs:
       - name: Upload Linux build
         uses: actions/upload-artifact@v4
         with:
-          name: huma-rime-adder_linux_x64_${{ steps.git_tags.outputs.current }}
+          name: linux-build
           path: dist/huma-rime-adder/
   
   build-macos-intel:
@@ -78,11 +67,6 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-      - name: Get git tags
-        id: git_tags
-        run: |
-          current=$(git describe --abbrev=0 --tags)
-          echo "current=${current}" >> ${GITHUB_OUTPUT}
       - name: Set Up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -99,7 +83,7 @@ jobs:
       - name: Upload macOS Intel build
         uses: actions/upload-artifact@v4
         with:
-          name: huma-rime-adder_macos_intel_${{ steps.git_tags.outputs.current }}
+          name: macos-intel-build
           path: dist/huma-rime-adder/
 
   build-macos-arm64:
@@ -109,11 +93,6 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
-      - name: Get git tags
-        id: git_tags
-        run: |
-          current=$(git describe --abbrev=0 --tags)
-          echo "current=${current}" >> ${GITHUB_OUTPUT}
       - name: Set Up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -130,7 +109,7 @@ jobs:
       - name: Upload macOS ARM64 build
         uses: actions/upload-artifact@v4
         with:
-          name: huma-rime-adder_macos_arm64_${{ steps.git_tags.outputs.current }}
+          name: macos-arm64-build
           path: dist/huma-rime-adder/
   
   release:
@@ -156,23 +135,39 @@ jobs:
       - name: Download Windows build
         uses: actions/download-artifact@v5
         with:
-          name: huma-rime-adder_windows_x64_${{ steps.git_tags.outputs.current }}
+          name: windows-build
           path: release/windows
       - name: Download Linux build
         uses: actions/download-artifact@v5
         with:
-          name: huma-rime-adder_linux_x64_${{ steps.git_tags.outputs.current }}
+          name: linux-build
           path: release/linux
       - name: Download macOS Intel build
         uses: actions/download-artifact@v5
         with:
-          name: huma-rime-adder_macos_intel_${{ steps.git_tags.outputs.current }}
+          name: macos-intel-build
           path: release/macos-intel
       - name: Download macOS ARM64 build
         uses: actions/download-artifact@v5
         with:
-          name: huma-rime-adder_macos_arm64_${{ steps.git_tags.outputs.current }}
+          name: macos-arm64-build
           path: release/macos-arm64
+      - name: Create uploads directory
+        run: |
+          rm -rf uploads
+          mkdir uploads
+      - name: Zip Windows artifact to uploads
+        run: |
+          zip -r uploads/huma-rime-adder_windows_x64_${{ steps.git_tags.outputs.current }}.zip release/windows/*
+      - name: Zip Linux artifact to uploads
+        run: |
+          zip -r uploads/huma-rime-adder_linux_x64_${{ steps.git_tags.outputs.current }}.zip release/linux/*
+      - name: Zip macOS Intel artifact to uploads
+        run: |
+          zip -r uploads/huma-rime-adder_macos_intel_${{ steps.git_tags.outputs.current }}.zip release/macos-intel/*
+      - name: Zip macOS ARM64 artifact to uploads
+        run: |
+          zip -r uploads/huma-rime-adder_macos_arm64_${{ steps.git_tags.outputs.current }}.zip release/macos-arm64/*
       - name: Create release
         uses: ncipollo/release-action@v1
         with:
@@ -181,5 +176,5 @@ jobs:
           name: Release ${{ steps.git_tags.outputs.current }}
           prerelease: false
           draft: false
-          artifacts: "release/windows/*,release/linux/*,release/macos-intel/*,release/macos-arm64/*"
+          artifacts: "uploads/*"
           body: ${{ steps.changelog_text.outputs.changes }}

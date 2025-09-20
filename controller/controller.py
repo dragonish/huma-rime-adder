@@ -31,6 +31,7 @@ class AdderController(QObject):
         self._view.workDirectoryLabel.setText(f"工作目录: {self._model.getWorkDir()}")
 
         self._view.closeSignal.connect(self._handleCloseEvent)  # 监听关闭信号
+        self._view.tinySignal.connect(self._handleTinyPinyinEvent)
         self._view.encodeButton.clicked.connect(self._handleEncodeEvent)
         self._view.addButton.clicked.connect(self._handleAddEvent)
         self._view.queryButton.clicked.connect(self._handleQueryEvent)
@@ -268,3 +269,10 @@ class AdderController(QObject):
         """处理打开工作目录"""
         workDir = self._model.getWorkDir()
         openDirectory(workDir)
+
+    def _handleTinyPinyinEvent(self):
+        """处理整理拼音滤镜事件"""
+        if self._model.tinyOpenCCPinyin():
+            self._view.showMsg("整理拼音滤镜文件完毕")
+        else:
+            self._view.showMsg("未整理拼音滤镜，请检查配置文件！")

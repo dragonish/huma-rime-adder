@@ -871,6 +871,34 @@ class CalcModel:
                 f.write(line + "\n")
         logger.info("重写主码表完成")
 
+    def tinyOpenCCPinyin(self) -> bool:
+        """整理拼音滤镜文件"""
+        if not self._pinyinTipFileStatus:
+            logger.warning("未找到拼音滤镜文件，跳过整理")
+            return False
+
+        pinyinOpenccFile = self._tigressFiles["pinyintip"]
+        wordSet: set[str] = set()
+
+        logger.info("开始整理拼音滤镜文件: {}", pinyinOpenccFile)
+        self._parseMain()
+
+        logger.info("解析用户码表...")
+        for code in self._codeDict:
+            for item in self._codeDict[code]:
+                word = item["word"]
+                if len(word) > 1:
+                    wordSet.add(word)
+        logger.info("解析完毕，读取到 {} 个词组", len(wordSet))
+        logger.info("重写拼音滤镜文件...")
+        with io.open(pinyinOpenccFile, mode="w", newline="\n", encoding="utf-8") as f:
+            for unit in wordSet:
+                tonePinyin = getTonePinyin(self.getCleanWord(unit))
+                input = unit + "\t〔" + tonePinyin + "〕\n"
+                f.write(input)
+        logger.info("整理拼音滤镜文件完毕")
+        return True
+
     def _writeName(self):
         """重写原名码表文件"""
         nameFile = self._tigressFiles["name"]

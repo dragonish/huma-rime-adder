@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QMessageBox,
     QSpacerItem,
     QSizePolicy,
     QSpinBox,
@@ -40,6 +41,7 @@ class AdderWindow(QMainWindow):
     """加词器主窗口"""
 
     closeSignal = pyqtSignal(bool)  # 关闭信号，参数表示是否强制退出
+    tinySignal = pyqtSignal()  # 整理拼音滤镜信号
 
     def __init__(self) -> None:
         super().__init__()
@@ -254,19 +256,7 @@ class AdderWindow(QMainWindow):
         otherWindow = QWidget(self)
         otherLayout = QGridLayout()
 
-        self.workDirectoryLabel = QLabel("")
-        otherLayout.addWidget(self.workDirectoryLabel, 0, 0, 2, 1)
-        self.openWorkDirectoryButton = NoFoucsButton("打开工作目录")
-        otherLayout.addWidget(self.openWorkDirectoryButton, 1, 0, 2, 1)
-
-        otherLayout.addWidget(
-            QLabel(f"日志文件: {LogManager.getLogFileLocation()}"), 2, 0, 2, 1
-        )
-        openLogDirectoryButton = NoFoucsButton("打开日志目录")
-        openLogDirectoryButton.clicked.connect(LogManager.openLogDirectory)
-        otherLayout.addWidget(openLogDirectoryButton, 3, 0, 2, 1)
-
-        otherLayout.addWidget(QLabel(f"程序版本: {APP_VERSION}"), 4, 0, 2, 1)
+        otherLayout.addWidget(QLabel(f"程序版本: {APP_VERSION}"), 0, 0, 2, 1)
 
         sourceWidget = QWidget()
         sourceLayout = QHBoxLayout()
@@ -286,12 +276,30 @@ class AdderWindow(QMainWindow):
         )
         sourceLayout.addItem(spacer)
         sourceWidget.setLayout(sourceLayout)
-        otherLayout.addWidget(sourceWidget, 5, 0, 2, 1)
+        otherLayout.addWidget(sourceWidget, 1, 0, 2, 1)
+
+        self.workDirectoryLabel = QLabel("")
+        otherLayout.addWidget(self.workDirectoryLabel, 2, 0, 2, 1)
+
+        otherLayout.addWidget(
+            QLabel(f"日志文件: {LogManager.getLogFileLocation()}"), 3, 0, 2, 1
+        )
+
+        tinyPinyinButton = NoFoucsButton("整理拼音滤镜")
+        tinyPinyinButton.clicked.connect(self._showTinyConfirmationDialog)
+        otherLayout.addWidget(tinyPinyinButton, 4, 0, 2, 1)
+
+        self.openWorkDirectoryButton = NoFoucsButton("打开工作目录")
+        otherLayout.addWidget(self.openWorkDirectoryButton, 5, 0, 2, 1)
+
+        openLogDirectoryButton = NoFoucsButton("打开日志目录")
+        openLogDirectoryButton.clicked.connect(LogManager.openLogDirectory)
+        otherLayout.addWidget(openLogDirectoryButton, 6, 0, 2, 1)
 
         forceExitButton = NoFoucsButton("强制退出")
         forceExitButton.setStyleSheet(BUTTON_RED)
         forceExitButton.clicked.connect(self._forceExit)
-        otherLayout.addWidget(forceExitButton, 6, 0, 2, 1)
+        otherLayout.addWidget(forceExitButton, 7, 0, 2, 1)
 
         otherWindow.setLayout(otherLayout)
         self._tabWidget.addTab(otherWindow, "其他")
@@ -301,6 +309,28 @@ class AdderWindow(QMainWindow):
         self._status.setSizeGripEnabled(False)
         self._status.showMessage("等待操作中...")
         self.setStatusBar(self._status)
+
+    def _showTinyConfirmationDialog(self):
+        msgBox = QMessageBox(
+            QMessageBox.Icon.Question,
+            "确认操作",
+            "您确定要执行整理拼音滤镜操作吗？这将覆盖并重写拼音滤镜文件！",
+            QMessageBox.StandardButton.NoButton,
+            self,
+        )
+
+        yesButton = msgBox.addButton(QMessageBox.StandardButton.Yes)
+        if yesButton:
+            yesButton.setText("是")
+        noButton = msgBox.addButton(QMessageBox.StandardButton.No)
+        if noButton:
+            noButton.setText("否")
+        msgBox.setDefaultButton(noButton)
+        msgBox.setEscapeButton(noButton)
+
+        reply = msgBox.exec()
+        if reply == QMessageBox.StandardButton.Yes:
+            self.tinySignal.emit()
 
     def showEvent(self, event: QShowEvent):
         """重写窗口显示事件"""

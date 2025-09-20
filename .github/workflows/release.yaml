@@ -158,16 +158,20 @@ jobs:
           mkdir uploads
       - name: Zip Windows artifact to uploads
         run: |
-          zip -r uploads/huma-rime-adder_windows_x64_${{ steps.git_tags.outputs.current }}.zip release/windows/*
+          cd release/windows
+          zip -r "${GITHUB_WORKSPACE}/uploads/huma-rime-adder_windows_x64_${{ steps.git_tags.outputs.current }}.zip" .
       - name: Zip Linux artifact to uploads
         run: |
-          zip -r uploads/huma-rime-adder_linux_x64_${{ steps.git_tags.outputs.current }}.zip release/linux/*
+          cd release/linux
+          zip -r "${GITHUB_WORKSPACE}/uploads/huma-rime-adder_linux_x64_${{ steps.git_tags.outputs.current }}.zip" .
       - name: Zip macOS Intel artifact to uploads
         run: |
-          zip -r uploads/huma-rime-adder_macos_intel_${{ steps.git_tags.outputs.current }}.zip release/macos-intel/*
+          cd release/macos-intel
+          zip -r "${GITHUB_WORKSPACE}/uploads/huma-rime-adder_macos_intel_${{ steps.git_tags.outputs.current }}.zip" .
       - name: Zip macOS ARM64 artifact to uploads
         run: |
-          zip -r uploads/huma-rime-adder_macos_arm64_${{ steps.git_tags.outputs.current }}.zip release/macos-arm64/*
+          cd release/macos-arm64
+          zip -r "${GITHUB_WORKSPACE}/uploads/huma-rime-adder_macos_arm64_${{ steps.git_tags.outputs.current }}.zip" .
       - name: Create release
         uses: ncipollo/release-action@v1
         with:

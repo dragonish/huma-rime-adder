@@ -7,8 +7,11 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QCloseEvent, QIcon, QPixmap, QShowEvent
 from PyQt6.QtWidgets import (
     QGridLayout,
+    QHBoxLayout,
     QLabel,
     QMainWindow,
+    QSpacerItem,
+    QSizePolicy,
     QSpinBox,
     QStatusBar,
     QTableView,
@@ -29,6 +32,7 @@ from .style import (
     BUTTON_RED,
     CustomWidthInput,
     NoFoucsButton,
+    ClickableLabel,
 )
 
 
@@ -263,10 +267,31 @@ class AdderWindow(QMainWindow):
         otherLayout.addWidget(openLogDirectoryButton, 3, 0, 2, 1)
 
         otherLayout.addWidget(QLabel(f"程序版本: {APP_VERSION}"), 4, 0, 2, 1)
+
+        sourceWidget = QWidget()
+        sourceLayout = QHBoxLayout()
+        sourceLayout.setSpacing(5)
+        sourceLayout.setContentsMargins(0, 0, 0, 0)
+        sourceLabel = QLabel("项目地址:")
+        sourceLayout.addWidget(sourceLabel)
+        clickableLabel = ClickableLabel(
+            "dragonish/huma-rime-adder",
+            "https://github.com/dragonish/huma-rime-adder",
+        )
+        sourceLayout.addWidget(clickableLabel)
+
+        # 添加一个弹性 spacer，但设置其最小尺寸为 0
+        spacer = QSpacerItem(
+            0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+        )
+        sourceLayout.addItem(spacer)
+        sourceWidget.setLayout(sourceLayout)
+        otherLayout.addWidget(sourceWidget, 5, 0, 2, 1)
+
         forceExitButton = NoFoucsButton("强制退出")
         forceExitButton.setStyleSheet(BUTTON_RED)
         forceExitButton.clicked.connect(self._forceExit)
-        otherLayout.addWidget(forceExitButton, 5, 0, 2, 1)
+        otherLayout.addWidget(forceExitButton, 6, 0, 2, 1)
 
         otherWindow.setLayout(otherLayout)
         self._tabWidget.addTab(otherWindow, "其他")

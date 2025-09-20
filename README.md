@@ -63,8 +63,9 @@
 
 ### 启动命令
 
-- `--log <log_level>`: 可选，设置日志级别。默认为 `INFO`。可选值有 `TRACE`、`DEBUG`、`INFO`、`WARNING` 和 `ERROR`。
-- `--work <work_dir>`: 可选，设置工作目录(码表文件所在目录)。默认为当前工作目录。
+- `-c, --config <config_file>`: 可选，设置配置文件路径。未指定时，默认尝试读取程序根目录下的 `config.ini` 文件。
+- `-l, --log <log_level>`: 可选，设置日志级别。默认为 `INFO`。可选值有 `TRACE`、`DEBUG`、`INFO`、`WARNING` 和 `ERROR`。
+- `-w, --work <work_dir>`: 可选，设置工作目录(码表文件所在目录)。默认为当前工作目录。
 
 ### 配置文件
 

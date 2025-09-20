@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import argparse
 import os
 import sys
 from loguru import logger
@@ -17,13 +16,8 @@ from window.window import AdderWindow
 
 
 if __name__ == "__main__":
-    # 启动参数
-    ap = argparse.ArgumentParser(description=f"猛击虎码加词器(v{APP_VERSION})")
-    ap.add_argument("-l", "--log", required=False, help="日志记录级别")
-    ap.add_argument("-w", "--work", required=False, help="自定义工作目录")
-
-    # 使用支持配置文件的新解析函数
-    config = parseArgsWithConfig(ap)
+    # 使用支持配置文件的解析函数
+    config = parseArgsWithConfig()
 
     # ? 去除 Qt 的字体回退警告日志
     os.environ["QT_LOGGING_RULES"] = "qt.qpa.fonts=false"

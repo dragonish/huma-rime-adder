@@ -82,3 +82,33 @@ class WordTableModel(QAbstractTableModel):
         self.beginResetModel()
         self._data = []
         self.endResetModel()
+
+    def getFirstRowWeight(self) -> int:
+        """获取第一行的 `weight` 列值，没有时返回 `0`
+
+        Returns:
+            int: 第一行的 `weight` 值，如果没有数据则返回 `0`
+        """
+        if not self._data:
+            return 0
+
+        try:
+            weight = self._data[0].get("weight")
+            return int(weight) if weight is not None else 0
+        except (ValueError, TypeError):
+            return 0
+
+    def getLastRowWeight(self) -> int:
+        """获取最后一行的 `weight` 列值，没有时返回 `0`
+
+        Returns:
+            int: 最后一行的 `weight` 值，如果没有数据则返回 `0`
+        """
+        if not self._data:
+            return 0
+
+        try:
+            weight = self._data[-1].get("weight")
+            return int(weight) if weight is not None else 0
+        except (ValueError, TypeError):
+            return 0

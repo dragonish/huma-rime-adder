@@ -1350,36 +1350,6 @@ class CalcModel:
             comment=comment,
         )
 
-    def findMaxWeight(self, code: str) -> int:
-        """获取编码的最大权重值
-
-        Args:
-            code (str): 编码
-
-        Returns:
-            int: 权重值，未找到时为 `0`
-        """
-        if code and code in self._codeDict:
-            # 降序排序
-            self._codeDict[code].sort(key=lambda item: item["weight"], reverse=True)
-            return self._codeDict[code][0]["weight"]
-        return 0
-
-    def findMinWeight(self, code: str) -> int:
-        """获取编码的最小权重值
-
-        Args:
-            code (str): 编码
-
-        Returns:
-            int: 权重值，未找到时为 `0`
-        """
-        if code and code in self._codeDict:
-            # 升序排序
-            self._codeDict[code].sort(key=lambda item: item["weight"], reverse=False)
-            return self._codeDict[code][0]["weight"]
-        return 0
-
     def add(self, word: str, code: str, weight: int) -> CacheStatus:
         """添加词条
 

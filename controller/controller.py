@@ -163,7 +163,7 @@ class AdderController(QObject):
         """处理权重值置顶事件"""
         code = self._view.getCode()
         if code:
-            weight = self._model.findMaxWeight(code) + 512
+            weight = self._view.findMaxWeight() + 512
             self._view.setWeight(weight)
             self._view.showMsg("已置顶词条")
         else:
@@ -173,7 +173,7 @@ class AdderController(QObject):
         """处理权重值最大化事件"""
         code = self._view.getCode()
         if code:
-            weight = self._model.findMaxWeight(code)
+            weight = self._view.findMaxWeight()
             self._view.setWeight(weight)
             self._view.showMsg("已最大化权重值")
         else:
@@ -183,7 +183,7 @@ class AdderController(QObject):
         """处理权重值最小化事件"""
         code = self._view.getCode()
         if code:
-            weight = self._model.findMinWeight(code)
+            weight = self._view.findMinWeight()
             self._view.setWeight(weight)
             self._view.showMsg("已最小化权重值")
         else:

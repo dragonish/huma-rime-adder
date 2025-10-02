@@ -545,3 +545,19 @@ class AdderWindow(QMainWindow):
     def switchToTab(self, index: int) -> None:
         """切换至指定标签页"""
         self._tabWidget.setCurrentIndex(index)
+
+    def findMaxWeight(self) -> int:
+        """获取重码列表的最大权重值
+
+        Returns:
+            int: 权重值，未找到时为 `0`
+        """
+        return self._wordTableModel.getFirstRowWeight()
+
+    def findMinWeight(self) -> int:
+        """获取编码的最小权重值
+
+        Returns:
+            int: 权重值，未找到时为 `0`
+        """
+        return self._wordTableModel.getLastRowWeight()

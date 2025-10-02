@@ -165,5 +165,6 @@ cython_debug/
 *.sh
 !build.sh
 *config.ini
+test_*.txt
 .DS_Store
 .vscode

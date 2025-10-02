@@ -67,6 +67,7 @@
 - `-l, --log <log_level>`: 可选，设置日志级别。默认为 `INFO`。可选值有 `TRACE`、`DEBUG`、`INFO`、`WARNING` 和 `ERROR`。
 - `-w, --work <work_dir>`: 可选，设置工作目录(码表文件所在目录)。默认为当前工作目录。
 - `-i, --input <word>`: 可选，启动时直接编码的词条。
+- `-e, --encode <words_file>`: 可选，批量编码词条文件(每行一个词条)。
 
 ### 配置文件
 

@@ -29,6 +29,7 @@ def parseArgsWithConfig() -> Config:
     parser.add_argument("-l", "--log", required=False, help="日志记录级别")
     parser.add_argument("-w", "--work", required=False, help="自定义工作目录")
     parser.add_argument("-i", "--input", required=False, help="直接编码的词条")
+    parser.add_argument("-e", "--encode", required=False, help="批量编码词条文件")
 
     """解析命令行参数，合并配置文件设置"""
     # 解析命令行参数
@@ -58,5 +59,8 @@ def parseArgsWithConfig() -> Config:
 
     if args.input:
         configSettings["input"] = args.input
+
+    if args.encode:
+        configSettings["encode"] = args.encode
 
     return configSettings

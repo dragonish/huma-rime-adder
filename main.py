@@ -44,6 +44,11 @@ if __name__ == "__main__":
         logger.error("缺失码表文件，程序结束运行，退出代码: {}", ExitCode.ERROR.value)
         sys.exit(ExitCode.ERROR.value)  #! 退出程序
 
+    if config["encode"]:
+        exitCode = model.encodeFile(config["encode"])
+        logger.info("程序结束运行，退出代码: {}", exitCode.value)
+        sys.exit(exitCode.value)
+
     adderApp = Application.initialize(sys.argv)
     adderWindow = AdderWindow()
     controller = AdderController(model=model, view=adderWindow)

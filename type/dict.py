@@ -51,4 +51,5 @@ class Config(TypedDict):
     log: str
     work: str
     input: str
+    encode: str
     tigress: TigressFiles

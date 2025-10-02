@@ -21,7 +21,13 @@ def loadConfig(configFile: str | None) -> Config:
         "name": "",
         "symbols": "symbols.yaml",
     }
-    config: Config = {"log": "INFO", "work": "", "input": "", "tigress": files}
+    config: Config = {
+        "log": "INFO",
+        "work": "",
+        "input": "",
+        "encode": "",
+        "tigress": files,
+    }
 
     if configFile:
         try:

@@ -1594,3 +1594,56 @@ class CalcModel:
             writeState = True
 
         return ExitCode.SUCCESS if writeState else ExitCode.NOTHING
+
+    def encodeFile(self, file: str) -> ExitCode:
+        """编码词条文件
+
+        Args:
+            file (str): 词条输入文件
+
+        Returns:
+            ExitCode: 退出状态
+        """
+        if not os.path.exists(file):
+            logger.error("词条输入文件不存在")
+            return ExitCode.ERROR
+
+        inputSet = set(readFile(file))
+        if len(inputSet) == 0:
+            logger.warning("词条输入文件内容为空")
+            return ExitCode.NOTHING
+
+        logger.info("共读取到 {} 个输入词条", len(inputSet))
+
+        for line in inputSet:
+            item = line.strip()
+            if len(item) <= 1:
+                continue
+
+            res = self.encode(item)
+            dup = self.query(res["code"], res["isEnglish"])
+            exists = any(ele["word"] == item for ele in dup)
+            if exists:
+                continue
+
+            if res["isEnglish"] and self._englishFileStatus:
+                self._englishCached.append(
+                    {"word": item, "code": res["code"], "weight": 0}
+                )
+            else:
+                self._tigressCached.append(
+                    {"word": item, "code": res["code"], "weight": 0}
+                )
+
+        writeState = False
+        if len(self._englishCached) > 0:
+            self._writeEnglish()
+            writeState = True
+        if len(self._tigressCached) > 0:
+            self._writeMain()
+            writeState = True
+        logger.info(
+            "共批量写入 {} 个词条", len(self._englishCached) + len(self._tigressCached)
+        )
+
+        return ExitCode.SUCCESS if writeState else ExitCode.NOTHING

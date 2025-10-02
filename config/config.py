@@ -12,7 +12,7 @@ def loadConfig(configFile: str | None) -> Config:
         "main": "tigress.extended.dict.yaml",
         "characters": "tigress.dict.yaml",
         "phrases": "tigress_ci.dict.yaml",
-        "simple": "",
+        "simple": "tigress_simp_ci.dict.yaml",
         "english": "easy_english.dict.yaml",
         "charset": "core2022.dict.yaml",
         "pinyin": "PY_c.dict.yaml",

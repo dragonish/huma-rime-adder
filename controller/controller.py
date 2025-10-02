@@ -276,3 +276,12 @@ class AdderController(QObject):
             self._view.showMsg("整理拼音滤镜文件完毕")
         else:
             self._view.showMsg("未整理拼音滤镜，请检查配置文件！")
+
+    def encodeWord(self, word: str):
+        """编码词条
+
+        Args:
+            word (str): 词条
+        """
+        self._view.setWord(word)
+        self._handleEncodeEvent()

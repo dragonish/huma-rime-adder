@@ -50,4 +50,5 @@ class TigressFiles(TypedDict):
 class Config(TypedDict):
     log: str
     work: str
+    input: str
     tigress: TigressFiles

@@ -48,4 +48,8 @@ if __name__ == "__main__":
     adderWindow = AdderWindow()
     controller = AdderController(model=model, view=adderWindow)
     adderWindow.show()
+
+    if config["input"]:
+        controller.encodeWord(config["input"])
+
     sys.exit(adderApp.exec())

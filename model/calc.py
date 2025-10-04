@@ -477,7 +477,7 @@ class CalcModel:
                     cacheList.remove(cacheItem)
                     state = True
                     logger.info(
-                        "将 {word}({code}) 的字频由 {old} 替换为 {new}",
+                        "将 {word}({code}) 的词频由 {old} 替换为 {new}",
                         word=word,
                         code=code,
                         old=weight,
@@ -645,7 +645,7 @@ class CalcModel:
                     cacheList.remove(cache_item)
                     state = True
                     logger.info(
-                        "将 {word}({code}) 的字频由 {old} 替换为 {new}",
+                        "将 {word}({code}) 的词频由 {old} 替换为 {new}",
                         word=word,
                         code=code,
                         old=weight,
@@ -794,7 +794,7 @@ class CalcModel:
                     cacheList.remove(cacheItem)
                     state = True
                     logger.info(
-                        "将 {word}({code}) 的字频由 {old} 替换为 {new}",
+                        "将 {word}({code}) 的词频由 {old} 替换为 {new}",
                         word=word,
                         code=code,
                         old=weight,

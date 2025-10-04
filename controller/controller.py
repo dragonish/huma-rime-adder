@@ -18,6 +18,7 @@ class AdderController(QObject):
         super().__init__()
         self._model = model
         self._view = view
+        self._tinyState = False
 
         if not self._model.getNameFileStatus():
             self._view.hideNameTab()
@@ -56,6 +57,8 @@ class AdderController(QObject):
             exitCode = ExitCode.FORCE_EXIT
         else:
             exitCode = self._model.writer()
+            if self._tinyState:
+                exitCode = ExitCode.SUCCESS
         logger.info("程序结束运行，退出代码: {}", exitCode.value)
         exitApp(exitCode.value)
 
@@ -271,16 +274,18 @@ class AdderController(QObject):
         openDirectory(workDir)
 
     def _handleTinyPinyinEvent(self, type: MessageType):
-        """处理整理拼音滤镜事件"""
+        """处理整理拼音事件"""
         match type:
             case MessageType.TINY_PINYIN_TABLE:
                 if self._model.tinyPinyinTable():
                     self._view.showMsg("整理拼音码表文件完毕")
+                    self._tinyState = True
                 else:
                     self._view.showMsg("未整理拼音码表，请检查配置文件！")
             case MessageType.TINY_PINYIN_TIP:
                 if self._model.tinyOpenCCPinyin():
                     self._view.showMsg("整理拼音滤镜文件完毕")
+                    self._tinyState = True
                 else:
                     self._view.showMsg("未整理拼音滤镜，请检查配置文件！")
 

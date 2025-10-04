@@ -27,3 +27,8 @@ class CacheStatus(Enum):
 
     def isException(self) -> bool:
         return self in (CacheStatus.SIMPLE_EXCEPTION, CacheStatus.ENGLISH_EXCEPTION)
+
+
+class MessageType(Enum):
+    TINY_PINYIN_TABLE = auto()  # 整理拼音码表
+    TINY_PINYIN_TIP = auto()  # 整理拼音滤镜

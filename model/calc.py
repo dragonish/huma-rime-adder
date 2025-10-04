@@ -871,6 +871,52 @@ class CalcModel:
                 f.write(line + "\n")
         logger.info("重写主码表完成")
 
+    def tinyPinyinTable(self) -> bool:
+        """整理拼音码表文件"""
+        if not self._pinyinFileStatus:
+            logger.warning("未找到拼音码表文件，跳过整理")
+            return False
+
+        pinyinFile = self._tigressFiles["pinyin"]
+        writeContent: list[str] = []
+        cacheDict: dict[str, list[str]] = {}
+        columns = ColumnsModel()
+
+        logger.info("开始整理拼音码表文件: {}", pinyinFile)
+
+        lines = readFile(pinyinFile, False)
+        for line in lines:
+            item = line.strip()
+            if item.startswith("#"):
+                writeContent.append(line)
+                continue
+
+            if not columns.isCompleted:
+                writeContent.append(line)
+                columns.lineHandler(item)
+                continue
+
+            fields = item.split("\t")
+            if len(fields) < 3:
+                writeContent.append(line)
+                continue
+            word = safeGet(fields, columns.dict["text"])
+            code = safeGet(fields, columns.dict["code"])
+
+            if word in cacheDict:
+                if not code in cacheDict[word]:
+                    cacheDict[word].append(code)
+                    writeContent.append(line)
+            else:
+                cacheDict[word] = [code]
+                writeContent.append(line)
+
+        with io.open(pinyinFile, mode="w", newline="\n", encoding="utf-8") as f:
+            for line in writeContent:
+                f.write(line + "\n")
+        logger.info("整理拼音码表文件完毕")
+        return True
+
     def tinyOpenCCPinyin(self) -> bool:
         """整理拼音滤镜文件"""
         if not self._pinyinTipFileStatus:

@@ -8,7 +8,7 @@ from model.calc import CalcModel
 from window.window import AdderWindow
 from common.file import openDirectory
 from common.english import isPureEnglish
-from type.status import ExitCode, CacheStatus
+from type.status import ExitCode, CacheStatus, MessageType
 
 
 class AdderController(QObject):
@@ -270,12 +270,19 @@ class AdderController(QObject):
         workDir = self._model.getWorkDir()
         openDirectory(workDir)
 
-    def _handleTinyPinyinEvent(self):
+    def _handleTinyPinyinEvent(self, type: MessageType):
         """处理整理拼音滤镜事件"""
-        if self._model.tinyOpenCCPinyin():
-            self._view.showMsg("整理拼音滤镜文件完毕")
-        else:
-            self._view.showMsg("未整理拼音滤镜，请检查配置文件！")
+        match type:
+            case MessageType.TINY_PINYIN_TABLE:
+                if self._model.tinyPinyinTable():
+                    self._view.showMsg("整理拼音码表文件完毕")
+                else:
+                    self._view.showMsg("未整理拼音码表，请检查配置文件！")
+            case MessageType.TINY_PINYIN_TIP:
+                if self._model.tinyOpenCCPinyin():
+                    self._view.showMsg("整理拼音滤镜文件完毕")
+                else:
+                    self._view.showMsg("未整理拼音滤镜，请检查配置文件！")
 
     def encodeWord(self, word: str):
         """编码词条

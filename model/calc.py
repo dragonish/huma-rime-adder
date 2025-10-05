@@ -21,7 +21,7 @@ from model.cache import CacheList
 from common.file import getTableSource, readFile
 from common.conversion import safeGet, strToInt
 from common.pinyin import getPinyin, getTonePinyin
-from common.english import isPureEnglish, containsEnglishLetter
+from common.english import isPureEnglish
 
 
 class CalcModel:
@@ -843,9 +843,6 @@ class CalcModel:
 
                     for unit in cacheList:
                         word = unit["word"]
-                        if containsEnglishLetter(word):
-                            #! 不处理包含字母的词条
-                            continue
                         code = getPinyin(self.getCleanWord(word))
                         input = pinyinColmuns.str.format(text=word, code=code, weight=0)
                         f.write(input + "\n")

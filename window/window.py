@@ -361,7 +361,11 @@ class AdderWindow(QMainWindow):
             event (QCloseEvent): 事件
         """
         super().closeEvent(event)
-        self.closeSignal.emit(self._forceExitState)  # 触发关闭信号
+        try:
+            logger.debug("发出关闭信号")
+            self.closeSignal.emit(self._forceExitState)  # 触发关闭信号
+        except Exception as e:
+            logger.error("发出关闭信号出错: {}", str(e))
 
     def hideNameTab(self) -> None:
         """隐藏原名标签页"""

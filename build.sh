@@ -1,3 +1,4 @@
 #!/bin/bash
 
-pyinstaller -i icon.ico -n huma-rime-adder main.py
+pyinstaller -i icon.ico -y -n huma-rime-adder main.py
+cp config.ini.template dist/huma-rime-adder/

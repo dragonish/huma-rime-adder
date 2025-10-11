@@ -1285,9 +1285,7 @@ class CalcModel:
                 for item in self._englishDict[code]:
                     results.append(
                         {
-                            "word": item["word"],
-                            "weight": item["weight"],
-                            "source": item["source"],
+                            **item,
                             "range": True,
                         }
                     )

@@ -215,18 +215,10 @@ class CalcModel:
 
             # 处理编码字典
             if code in self._codeDict:
-                exist = False
-                for c in self._codeDict[code]:
-                    if c["word"] == word:
-                        # 覆盖同编码同词条项的权重
-                        c["weight"] = weight
-                        c["source"] = tableName
-                        exist = True
-                        break
-                if not exist:
-                    self._codeDict[code].append(
-                        {"word": word, "weight": weight, "source": tableName}
-                    )
+                # 收录所有词条项
+                self._codeDict[code].append(
+                    {"word": word, "weight": weight, "source": tableName}
+                )
             elif code:
                 self._codeDict[code] = [
                     {"word": word, "weight": weight, "source": tableName}

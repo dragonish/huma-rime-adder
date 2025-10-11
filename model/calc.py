@@ -10,6 +10,7 @@ from loguru import logger
 from type.dict import (
     CacheUnit,
     CodeTableUnit,
+    DeleteUnit,
     CodeUnit,
     EncodeResult,
     SymbolsUnit,
@@ -17,7 +18,7 @@ from type.dict import (
 )
 from type.status import ExitCode, CacheStatus
 from model.columns import ColumnsModel
-from model.cache import CacheList
+from model.cache import CacheList, DeleteCacheList
 from common.file import getTableSource, readFile
 from common.conversion import safeGet, strToInt
 from common.pinyin import getPinyin, getTonePinyin
@@ -75,10 +76,15 @@ class CalcModel:
         self._isParseSymbols = False  # 是否已解析符号码表
 
         self._tigressCached: list[CacheUnit] = []  # 虎码词条缓存
+        self._tigressDeleteCached: list[DeleteUnit] = []  # 虎码词条删除缓存
         self._simpleCached: list[CacheUnit] = []  # 简码缓存
+        self._simpleDeleteCached: list[DeleteUnit] = []  # 简码删除缓存
         self._phrasesCached: list[CacheUnit] = []  # 词组缓存
+        self._phrasesDeleteCached: list[DeleteUnit] = []  # 词组删除缓存
         self._charactersCached: list[CacheUnit] = []  # 单字缓存
+        self._charactersDeleteCached: list[DeleteUnit] = []  # 单字删除缓存
         self._englishCached: list[CacheUnit] = []  # 英文缓存
+        self._englishDeleteCached: list[DeleteUnit] = []  # 英文删除缓存
         self._charsetCached: set[str] = set()  # 字集缓存
         self._nameCached: dict[str, list[str]] = {}  # 原名缓存
         self._emojiCached: dict[str, list[str]] = {}  # 表情缓存
@@ -418,11 +424,12 @@ class CalcModel:
     def _writeEnglish(self):
         """重写英文码表文件"""
         englishFile = self._tigressFiles["english"]
+        logger.info("开始重写英文码表: {}", englishFile)
+
         writeContent: list[str] = []
         cacheList = CacheList()
+        deleteCacheList = DeleteCacheList(self._englishDeleteCached.copy())
         columns = ColumnsModel()
-
-        logger.info("开始重写英文码表: {}", englishFile)
 
         for item in self._englishCached:
             word = item["word"]
@@ -459,30 +466,40 @@ class CalcModel:
             code = safeGet(fields, columns.dict["code"])
             weight = safeGet(fields, columns.dict["weight"], "0")
 
-            state = False
-            for cacheItem in cacheList:
-                if cacheItem["word"] == word and cacheItem["code"] == code:
-                    input = columns.str.format(
-                        text=word, code=code, weight=cacheItem["weight"]
-                    )
-                    writeContent.append(input)
-                    cacheList.remove(cacheItem)
-                    state = True
+            cacheItem = cacheList.find(word, code)
+            if cacheItem:
+                if deleteCacheList.find(word, code, cacheItem["weight"]):
+                    # * 若存在于删除缓存中，则跳过处理
+                    continue
+                input = columns.str.format(
+                    text=word, code=code, weight=cacheItem["weight"]
+                )
+                writeContent.append(input)
+                logger.info(
+                    "将 {word}({code}) 的词频由 {old} 替换为 {new}",
+                    word=word,
+                    code=code,
+                    old=weight,
+                    new=cacheItem["weight"],
+                )
+            else:
+                if deleteCacheList.find(word, code, weight):
                     logger.info(
-                        "将 {word}({code}) 的词频由 {old} 替换为 {new}",
+                        "删除英文: {word}({code}) - {weight}",
                         word=word,
                         code=code,
-                        old=weight,
-                        new=cacheItem["weight"],
+                        weight=weight,
                     )
-                    break
-            if not state:
+                    continue
                 writeContent.append(line)
 
         for item in cacheList:
             word = item["word"]
             code = item["code"]
             weight = item["weight"]
+            if deleteCacheList.find(word, code, weight):
+                # * 若存在于删除缓存中，则跳过处理
+                continue
             input = columns.str.format(text=word, code=code, weight=weight)
             writeContent.append(input)
             logger.info(
@@ -522,14 +539,12 @@ class CalcModel:
     def _writeCharacters(self):
         """重写单字码表文件"""
         charactersFile = self._tigressFiles["characters"]
-        writeContent: list[str] = []
-        cacheList = CacheList()
-        columns = ColumnsModel()
-
         logger.info("开始重写单字码表: {}", charactersFile)
 
-        for item in self._charactersCached:
-            cacheList.push(item)
+        writeContent: list[str] = []
+        cacheList = CacheList(self._charactersCached.copy())
+        deleteCacheList = DeleteCacheList(self._charactersDeleteCached.copy())
+        columns = ColumnsModel()
 
         lines = readFile(charactersFile, False)
         for line in lines:
@@ -551,41 +566,54 @@ class CalcModel:
             code = safeGet(fields, columns.dict["code"])
             weight = safeGet(fields, columns.dict["weight"], "0")
 
-            state = False
-            for cacheItem in cacheList:
-                if cacheItem["word"] == word and cacheItem["code"] == code:
-                    input = columns.str.format(
-                        text=word, code=code, weight=cacheItem["weight"]
-                    )
-                    if len(fields) == 4:
-                        # ? 补全造词码部分
-                        input += "\t" + fields[3]
-                    writeContent.append(input)
-                    cacheList.remove(cacheItem)
-                    state = True
+            cacheItem = cacheList.find(word, code)
+            if cacheItem:
+                if deleteCacheList.find(word, code, cacheItem["weight"]):
+                    # * 若存在于删除缓存中，则跳过处理
+                    continue
+                input = columns.str.format(
+                    text=word, code=code, weight=cacheItem["weight"]
+                )
+                if len(fields) == 4:
+                    # ? 补全造词码部分
+                    input += "\t" + fields[3]
+                writeContent.append(input)
+                logger.info(
+                    "将 {word}({code}) 的字频由 {old} 替换为 {new}",
+                    word=word,
+                    code=code,
+                    old=weight,
+                    new=cacheItem["weight"],
+                )
+            else:
+                if deleteCacheList.find(word, code, weight):
                     logger.info(
-                        "将 {word}({code}) 的字频由 {old} 替换为 {new}",
+                        "删除单字: {word}({code}) - {weight}",
                         word=word,
                         code=code,
-                        old=weight,
-                        new=cacheItem["weight"],
+                        weight=weight,
                     )
-                    break
-            if not state:
+                    continue
                 writeContent.append(line)
 
-        for cacheItem in cacheList:
+        for item in cacheList:
+            word = item["word"]
+            code = item["code"]
+            weight = item["weight"]
+            if deleteCacheList.find(word, code, weight):
+                # * 若存在于删除缓存中，则跳过处理
+                continue
             input = columns.str.format(
-                text=cacheItem["word"],
-                code=cacheItem["code"],
-                weight=cacheItem["weight"],
+                text=word,
+                code=code,
+                weight=weight,
             )
             writeContent.append(input)
             logger.info(
                 "新增单字: {word}({code}) - {weight}",
-                word=cacheItem["word"],
-                code=cacheItem["code"],
-                weight=cacheItem["weight"],
+                word=word,
+                code=code,
+                weight=weight,
             )
 
         with io.open(charactersFile, mode="w", newline="\n", encoding="utf-8") as f:
@@ -596,14 +624,12 @@ class CalcModel:
     def _writePhrases(self):
         """重写词组码表文件"""
         phrasesFile = self._tigressFiles["phrases"]
-        writeContent: list[str] = []
-        cacheList = CacheList()
-        columns = ColumnsModel()
-
         logger.info("开始重写词组码表: {}", phrasesFile)
 
-        for item in self._phrasesCached:
-            cacheList.push(item)
+        writeContent: list[str] = []
+        cacheList = CacheList(self._phrasesCached.copy())
+        deleteCacheList = DeleteCacheList(self._phrasesDeleteCached.copy())
+        columns = ColumnsModel()
 
         lines = readFile(phrasesFile, False)
         for line in lines:
@@ -625,29 +651,40 @@ class CalcModel:
             code = safeGet(fields, columns.dict["code"])
             weight = safeGet(fields, columns.dict["weight"], "0")
 
-            state = False
-            for cache_item in cacheList:
-                if cache_item["word"] == word and cache_item["code"] == code:
-                    input = columns.str.format(
-                        text=word,
-                        code=code,
-                        weight=cache_item["weight"],
-                    )
-                    writeContent.append(input)
-                    cacheList.remove(cache_item)
-                    state = True
+            cacheItem = cacheList.find(word, code)
+            if cacheItem:
+                if deleteCacheList.find(word, code, cacheItem["weight"]):
+                    # * 若存在于删除缓存中，则跳过处理
+                    continue
+                input = columns.str.format(
+                    text=word,
+                    code=code,
+                    weight=cacheItem["weight"],
+                )
+                writeContent.append(input)
+                logger.info(
+                    "将 {word}({code}) 的词频由 {old} 替换为 {new}",
+                    word=word,
+                    code=code,
+                    old=weight,
+                    new=cacheItem["weight"],
+                )
+            else:
+                if deleteCacheList.find(word, code, weight):
                     logger.info(
-                        "将 {word}({code}) 的词频由 {old} 替换为 {new}",
+                        "删除词组: {word}({code}) - {weight}",
                         word=word,
                         code=code,
-                        old=weight,
-                        new=cache_item["weight"],
+                        weight=weight,
                     )
-            if not state:
+                    continue
                 writeContent.append(line)
 
-        if len(cacheList) > 0:
-            self._tigressCached = self._tigressCached + cacheList.toList()
+        for item in cacheList:
+            if deleteCacheList.find(item["word"], item["code"], item["weight"]):
+                # * 若存在于删除缓存中，则跳过处理
+                continue
+            self._tigressCached.append(item)
 
         with io.open(phrasesFile, mode="w", newline="\n", encoding="utf-8") as f:
             for line in writeContent:
@@ -657,18 +694,16 @@ class CalcModel:
     def _writeSimple(self):
         """重写简词码表文件"""
         simpleFile = self._tigressFiles["simple"]
+        logger.info("开始重写简词码表: {}", simpleFile)
+
         writeContent: list[str] = []
         deleteSet: set[str] = set()
-        cacheList = CacheList()
+        cacheList = CacheList(self._simpleCached.copy())
+        deleteCacheList = DeleteCacheList(self._simpleDeleteCached.copy())
         columns = ColumnsModel()
-
-        logger.info("开始重写简词码表: {}", simpleFile)
 
         for charsetCache in self._charsetCached:
             deleteSet.add(self._getCode(charsetCache, 3))
-
-        for item in self._simpleCached:
-            cacheList.push(item)
 
         lines = readFile(simpleFile, False)
         for line in lines:
@@ -688,6 +723,7 @@ class CalcModel:
                 continue
             word = safeGet(fields, columns.dict["text"])
             code = safeGet(fields, columns.dict["code"])
+            weight = safeGet(fields, columns.dict["weight"])
 
             if code in deleteSet:
                 logger.info(
@@ -697,42 +733,56 @@ class CalcModel:
                 )
                 continue
 
-            state = False
-            for cacheItem in cacheList:
-                if cacheItem["code"] == code:
-                    input = columns.str.format(
-                        text=cacheItem["word"],
-                        code=code,
-                        weight=cacheItem["weight"],
-                    )
-                    writeContent.append(input)
-                    cacheList.remove(cacheItem)
-                    state = True
+            item = cacheList.findCode(code)
+            if item:
+                if deleteCacheList.find(item["word"], code, item["weight"]):
+                    # * 若存在于删除缓存中，则跳过处理
+                    continue
+                input = columns.str.format(
+                    text=item["word"],
+                    code=code,
+                    weight=item["weight"],
+                )
+                writeContent.append(input)
+                logger.info(
+                    "将 {code} 的简词由 {old} 替换为 {new}",
+                    code=code,
+                    old=word,
+                    new=item["word"],
+                )
+            else:
+                if deleteCacheList.find(word, code, weight):
                     logger.info(
-                        "将 {code} 的简词由 {old} 替换为 {new}",
+                        "删除简词: {word}({code}) - {weight}",
+                        word=word,
                         code=code,
-                        old=word,
-                        new=cacheItem["word"],
+                        weight=weight,
                     )
-                    break
-            if not state:
+                    continue
                 writeContent.append(line)
 
-        for cacheItem in cacheList:
-            if cacheItem["code"] in deleteSet:
+        for item in cacheList:
+            word = item["word"]
+            code = item["code"]
+            weight = item["weight"]
+            if code in deleteSet:
                 logger.info("简词码 {code} 与新增常用字冲突，故跳过处理")
+                continue
+            elif deleteCacheList.find(word, code, weight):
+                # * 若存在于删除缓存中，则跳过处理
+                continue
             else:
                 input = columns.str.format(
-                    text=cacheItem["word"],
-                    code=cacheItem["code"],
-                    weight=cacheItem["weight"],
+                    text=word,
+                    code=code,
+                    weight=weight,
                 )
                 writeContent.append(input)
                 logger.info(
                     "新增简词: {word}({code}) - {weight}",
-                    word=cacheItem["word"],
-                    code=cacheItem["code"],
-                    weight=cacheItem["weight"],
+                    word=word,
+                    code=code,
+                    weight=weight,
                 )
 
         with io.open(simpleFile, mode="w", newline="\n", encoding="utf-8") as f:
@@ -743,16 +793,14 @@ class CalcModel:
     def _writeMain(self):
         """重写主码表文件和拼音滤镜文件"""
         mainFile = self._tigressFiles["main"]
+        logger.info("开始重写主码表: {}", mainFile)
+
         pinyinFile = self._tigressFiles["pinyin"]
         pinyinOpenccFile = self._tigressFiles["pinyintip"]
         writeContent: list[str] = []
-        cacheList = CacheList()
+        cacheList = CacheList(self._tigressCached.copy())
+        deleteCacheList = DeleteCacheList(self._tigressDeleteCached.copy())
         columns = ColumnsModel()
-
-        logger.info("开始重写主码表: {}", mainFile)
-
-        for item in self._tigressCached:
-            cacheList.push(item)
 
         lines = readFile(mainFile, False)
         for line in lines:
@@ -774,43 +822,60 @@ class CalcModel:
             code = safeGet(fields, columns.dict["code"])
             weight = safeGet(fields, columns.dict["weight"], "0")
 
-            state = False
-            for cacheItem in cacheList:
-                if cacheItem["word"] == word and cacheItem["code"] == code:
-                    input = columns.str.format(
-                        text=word,
-                        code=code,
-                        weight=cacheItem["weight"],
-                    )
-                    writeContent.append(input)
-                    cacheList.remove(cacheItem)
-                    state = True
-                    logger.info(
-                        "将 {word}({code}) 的词频由 {old} 替换为 {new}",
-                        word=word,
-                        code=code,
-                        old=weight,
-                        new=cacheItem["weight"],
-                    )
-            if not state:
-                writeContent.append(line)
-
-        if len(cacheList) > 0:
-            for item in cacheList:
+            cacheItem = cacheList.find(word, code)
+            if cacheItem:
+                if deleteCacheList.find(word, code, cacheItem["weight"]):
+                    # * 若存在于删除缓存中，则跳过处理
+                    continue
                 input = columns.str.format(
-                    text=item["word"],
-                    code=item["code"],
-                    weight=item["weight"],
+                    text=word,
+                    code=code,
+                    weight=cacheItem["weight"],
                 )
                 writeContent.append(input)
                 logger.info(
+                    "将 {word}({code}) 的词频由 {old} 替换为 {new}",
+                    word=word,
+                    code=code,
+                    old=weight,
+                    new=cacheItem["weight"],
+                )
+            else:
+                if deleteCacheList.find(word, code, weight):
+                    logger.info(
+                        "删除词条: {word}({code}) - {weight}",
+                        word=word,
+                        code=code,
+                        weight=weight,
+                    )
+                    continue
+                writeContent.append(line)
+
+        if len(cacheList) > 0:
+            pinyinCacheSet: set[str] = set()
+
+            for item in cacheList:
+                word = item["word"]
+                code = item["code"]
+                weight = item["weight"]
+                if deleteCacheList.find(word, code, weight):
+                    # * 若存在于删除缓存中，则跳过处理
+                    continue
+                input = columns.str.format(
+                    text=word,
+                    code=code,
+                    weight=weight,
+                )
+                writeContent.append(input)
+                pinyinCacheSet.add(word)
+                logger.info(
                     "新增词条: {word}({code}) - {weight}",
-                    word=item["word"],
-                    code=item["code"],
-                    weight=item["weight"],
+                    word=word,
+                    code=code,
+                    weight=weight,
                 )
 
-            if self._pinyinFileStatus:
+            if self._pinyinFileStatus and len(pinyinCacheSet) > 0:
                 logger.info("开始处理拼音码表文件: {}", pinyinFile)
                 with io.open(
                     pinyinFile, mode="a+", newline="\n", encoding="utf-8"
@@ -833,8 +898,7 @@ class CalcModel:
                     if not content.endswith("\n"):
                         f.write("\n")
 
-                    for unit in cacheList:
-                        word = unit["word"]
+                    for word in pinyinCacheSet:
                         code = getPinyin(self.getCleanWord(word))
                         input = pinyinColmuns.str.format(text=word, code=code, weight=0)
                         f.write(input + "\n")
@@ -843,13 +907,12 @@ class CalcModel:
                         )
                     logger.info("处理拼音码表文件完成")
 
-            if self._pinyinTipFileStatus:
+            if self._pinyinTipFileStatus and len(pinyinCacheSet) > 0:
                 logger.info("开始处理拼音滤镜文件: {}", pinyinOpenccFile)
                 with io.open(
                     pinyinOpenccFile, mode="a+", newline="\n", encoding="utf-8"
                 ) as f:
-                    for unit in cacheList:
-                        word = unit["word"]
+                    for word in pinyinCacheSet:
                         code = getTonePinyin(self.getCleanWord(word))
                         input = word + "\t〔" + code + "〕\n"
                         f.write(input)
@@ -1577,6 +1640,67 @@ class CalcModel:
 
         return cacheStatus
 
+    def delete(self, item: DeleteUnit):
+        """删除词条
+
+        Args:
+            item (DeleteUnit): 待删除的词条
+        """
+        source = item["source"]
+        code = item["code"]
+        word = item["word"]
+        weight = item["weight"]
+        isEnglish = source == self._englishSourceName
+
+        if isEnglish:
+            if code in self._englishDict:
+                for unit in self._englishDict[code]:
+                    if word == unit["word"] and weight == unit["weight"]:
+                        self._englishDict[code].remove(unit)
+                        self._englishDeleteCached.append(item)
+                        logger.debug(
+                            "待删除英文: {word}({code}) - {weight}",
+                            word=word,
+                            code=code,
+                            weight=weight,
+                        )
+                        break
+        else:
+            if code in self._codeDict:
+                for unit in self._codeDict[code]:
+                    if (
+                        word == unit["word"]
+                        and weight == unit["weight"]
+                        and source == unit["source"]
+                    ):
+                        self._codeDict[code].remove(unit)
+                        label = ""
+
+                        match source:
+                            case self._mainSourceName:
+                                self._tigressDeleteCached.append(item)
+                                label = "待删除词条"
+                            case self._simpleSourceName:
+                                self._simpleDeleteCached.append(item)
+                                label = "待删除简码"
+                            case self._phrasesSourceName:
+                                self._phrasesDeleteCached.append(item)
+                                label = "待删除词组"
+                            case self._charactersSourceName:
+                                self._charactersDeleteCached.append(item)
+                                label = "待删除单字"
+                            case _:
+                                label = "无法删除"
+
+                        logger.debug(
+                            "{label}: {word}({code}) - {weight}",
+                            label=label,
+                            word=word,
+                            code=code,
+                            weight=weight,
+                        )
+                        break
+
     def getWorkDir(self) -> str:
         """获取工作目录"""
         return self._workDir
@@ -1601,22 +1725,26 @@ class CalcModel:
         """
         writeState = False
 
-        if len(self._englishCached) > 0:
+        if len(self._englishCached) > 0 or len(self._englishDeleteCached) > 0:
             self._writeEnglish()
             writeState = True
         if len(self._charsetCached) > 0:
             self._writeCharset()
             writeState = True
-        if len(self._charactersCached) > 0:
+        if len(self._charactersCached) > 0 or len(self._charactersDeleteCached) > 0:
             self._writeCharacters()
             writeState = True
-        if len(self._phrasesCached) > 0:
+        if len(self._phrasesCached) > 0 or len(self._phrasesDeleteCached) > 0:
             self._writePhrases()
             writeState = True
-        if len(self._simpleCached) > 0 or len(self._charsetCached) > 0:
+        if (
+            len(self._simpleCached) > 0
+            or len(self._simpleDeleteCached) > 0
+            or len(self._charsetCached) > 0
+        ):
             self._writeSimple()
             writeState = True
-        if len(self._tigressCached) > 0:
+        if len(self._tigressCached) > 0 or len(self._tigressDeleteCached) > 0:
             self._writeMain()
             writeState = True
         if len(self._nameCached) > 0:

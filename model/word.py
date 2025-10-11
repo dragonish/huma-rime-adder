@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt
-from type.dict import CodeTableUnit
+from type.dict import CodeTableUnit, DeleteUnit
 
 
 class WordTableModel(QAbstractTableModel):
@@ -11,6 +11,7 @@ class WordTableModel(QAbstractTableModel):
     def __init__(self) -> None:
         super().__init__()
         self._data: list[CodeTableUnit] = []
+        self._code = ""
 
     def _getColKey(self, index: QModelIndex):
         colKey = "word"
@@ -67,19 +68,21 @@ class WordTableModel(QAbstractTableModel):
     def flags(self, index):
         return Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled
 
-    def updateData(self, newData: list[CodeTableUnit]) -> None:
+    def updateData(self, newCode: str, newData: list[CodeTableUnit]) -> None:
         """更新数据
 
         Args:
             new_data (list[CodeTableUnit]): 新数据
         """
         self.beginResetModel()
+        self._code = newCode
         self._data = newData
         self.endResetModel()
 
     def clearData(self) -> None:
         """清空数据"""
         self.beginResetModel()
+        self._code = ""
         self._data = []
         self.endResetModel()
 
@@ -112,3 +115,16 @@ class WordTableModel(QAbstractTableModel):
             return int(weight) if weight is not None else 0
         except (ValueError, TypeError):
             return 0
+
+    def removeRow(self, row, parent=QModelIndex()) -> DeleteUnit:
+        """删除行数据"""
+        self.beginRemoveRows(parent, row, row)
+        removedData = self._data[row]
+        del self._data[row]
+        self.endRemoveRows()
+        return DeleteUnit({**removedData, "code": self._code})
+
+    def getWeight(self, row) -> int:
+        """获取行权重"""
+        rowData = self._data[row]
+        return rowData["weight"]

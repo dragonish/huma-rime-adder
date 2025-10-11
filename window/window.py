@@ -15,7 +15,6 @@ from PyQt6.QtWidgets import (
     QSizePolicy,
     QSpinBox,
     QStatusBar,
-    QTableView,
     QTabWidget,
     QWidget,
 )
@@ -25,6 +24,7 @@ from type.dict import CodeTableUnit, EncodeResult
 from type.status import MessageType
 from model.word import WordTableModel
 from model.opencc import OpenCCTableModel
+from view.word import WordTableView
 from view.opencc import OpenCCTableView
 from log.manager import LogManager
 from .style import (
@@ -111,13 +111,10 @@ class AdderWindow(QMainWindow):
         wordLayout.addWidget(self.minButton, 2, 5)
 
         wordLayout.addWidget(QLabel("重码:"), 3, 0)
-        wordTableView = QTableView()
         self._wordTableModel = WordTableModel()
-        wordTableView.setModel(self._wordTableModel)
-        wordTableView.setColumnWidth(0, 145)
-        wordTableView.setColumnWidth(2, 120)
-        wordTableView.setColumnWidth(3, 40)
-        wordLayout.addWidget(wordTableView, 3, 1, 1, 6)
+        self.wordTableView = WordTableView(self._wordTableModel)
+        self.wordTableView.passWeight.connect(self.setWeight)
+        wordLayout.addWidget(self.wordTableView, 3, 1, 1, 6)
 
         wordWindow.setLayout(wordLayout)
         self._tabWidget.addTab(wordWindow, "词条")
@@ -514,9 +511,9 @@ class AdderWindow(QMainWindow):
             else:
                 self._rangeLabel.setText("全集")
 
-    def setTableData(self, data: list[CodeTableUnit]) -> None:
+    def setTableData(self, code: str, data: list[CodeTableUnit]) -> None:
         """设置重码列表数据"""
-        self._wordTableModel.updateData(data)
+        self._wordTableModel.updateData(code, data)
 
     def getTransName(self) -> str:
         """获取译名"""

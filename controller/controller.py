@@ -9,6 +9,7 @@ from window.window import AdderWindow
 from common.file import openDirectory
 from common.english import isPureEnglish
 from type.status import ExitCode, CacheStatus, MessageType
+from type.dict import DeleteUnit
 
 
 class AdderController(QObject):
@@ -50,6 +51,7 @@ class AdderController(QObject):
         self._view.openWorkDirectoryButton.clicked.connect(
             self._handleOpenWorkDirectoryEvent
         )
+        self._view.wordTableView.rowDeleted.connect(self._handleWordDeleteEvent)
 
     def _handleCloseEvent(self, forceExit: bool):
         """处理关闭事件"""
@@ -97,7 +99,7 @@ class AdderController(QObject):
                 info = self._model.simple(word)
                 self._view.setEncodeInfo(info)
                 results = self._model.query(info["code"], info["isEnglish"])
-                self._view.setTableData(results)
+                self._view.setTableData(info["code"], results)
                 self._view.showMsg("添加成功并自动编码三简词")
             elif not cacheStatus.isException():
                 self._view.clear()
@@ -112,7 +114,7 @@ class AdderController(QObject):
             if not info["isEnglish"] and len(results) > 0 and info["weight"] == 0:
                 newWeight = results[-1]["weight"] - 10
                 self._view.setWeight(newWeight if newWeight >= 0 else 0)
-            self._view.setTableData(results)
+            self._view.setTableData(info["code"], results)
             self._view.showMsg("编码成功")
         else:
             self._view.clear()
@@ -128,7 +130,7 @@ class AdderController(QObject):
             if not info["isEnglish"] and len(results) > 0 and info["weight"] == 0:
                 newWeight = results[-1]["weight"] - 10
                 self._view.setWeight(newWeight if newWeight >= 0 else 0)
-            self._view.setTableData(results)
+            self._view.setTableData(info["code"], results)
             self._view.showMsg("简码编码成功")
         else:
             self._view.clear()
@@ -141,7 +143,7 @@ class AdderController(QObject):
         isEnglish = isPureEnglish(self._model.getCleanWord(word))
         if code:
             results = self._model.query(code, isEnglish)
-            self._view.setTableData(results)
+            self._view.setTableData(code, results)
             self._view.showMsg("查询完成")
         else:
             self._view.clear()
@@ -156,7 +158,7 @@ class AdderController(QObject):
         if indentCode:
             self._view.setCode(indentCode)
             results = self._model.query(indentCode, isEnglish)
-            self._view.setTableData(results)
+            self._view.setTableData(indentCode, results)
             self._view.showMsg("缩进查询完成")
         else:
             self._view.clear()
@@ -191,6 +193,11 @@ class AdderController(QObject):
             self._view.showMsg("已最小化权重值")
         else:
             self._view.showMsg("没有找到编码，请检查输入！")
+
+    def _handleWordDeleteEvent(self, deleteItem: DeleteUnit):
+        """处理删除词条事件"""
+        self._model.delete(deleteItem)
+        self._view.showMsg("已删除词条")
 
     def _handleNameQueryEvent(self):
         """处理查询原名事件"""
@@ -262,7 +269,7 @@ class AdderController(QObject):
                 if not info["isEnglish"] and len(results) > 0 and info["weight"] == 0:
                     newWeight = results[-1]["weight"] - 10
                     self._view.setWeight(newWeight if newWeight >= 0 else 0)
-                self._view.setTableData(results)
+                self._view.setTableData(info["code"], results)
                 self._view.switchToTab(0)
                 self._view.showMsg("完成事件并为新词条编码")
         else:

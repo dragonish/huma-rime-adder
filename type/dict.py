@@ -14,6 +14,10 @@ class CodeTableUnit(CodeUnit):
     range: bool
 
 
+class DeleteUnit(CodeTableUnit):
+    code: str
+
+
 class EncodeResult(TypedDict):
     cleanWord: str
     isEnglish: bool

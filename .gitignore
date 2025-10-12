@@ -164,6 +164,7 @@ cython_debug/
 *.bat
 *.sh
 !build.sh
+!bump.sh
 *config.ini
 test_*.txt
 .DS_Store

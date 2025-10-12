@@ -1127,6 +1127,7 @@ class CalcModel:
                         if len(units) == 0:
                             logger.info("删除符号: {word}", word=word)
                         else:
+                            logComment = lastComment
                             if lastComment:
                                 writeList.append(f"#{lastComment}")
                                 lastComment = ""
@@ -1137,7 +1138,7 @@ class CalcModel:
                                 "重写符号: {word} -> {units} | 注释: {comment}",
                                 word=word,
                                 units=units,
-                                comment=lastComment,
+                                comment=logComment,
                             )
                         state = True
                         break

@@ -16,22 +16,18 @@ class CacheList(list[CacheUnit]):
         if not self:
             return
 
-        # 创建一个临时字典来存储去重后的元素
+        # 创建一个字典来存储最后出现的元素
         tempDict = {}
 
-        # 反向遍历，保留最后出现的元素(以保留最新权重)
-        for i in range(len(self) - 1, -1, -1):
-            item = self[i]
+        # 正向遍历，记录每个键最后一次出现的索引
+        for i, item in enumerate(self):
             key = (item["word"], item["code"])
+            tempDict[key] = (i, item)
 
-            # 如果已存在，则更新权重(保留最新值)
-            if key in tempDict:
-                tempDict[key]["weight"] = item["weight"]
-            else:
-                tempDict[key] = item
-
-        # 使用去重后的元素重建列表
-        self[:] = [item for _, item in sorted(tempDict.items())]
+        # 按照原始顺序重新构建列表
+        self[:] = [
+            item for _, (_, item) in sorted(tempDict.values(), key=lambda x: x[0])
+        ]
 
     def push(self, val: CacheUnit) -> None:
         """添加缓存元素（如果已存在则更新权重，否则添加新元素）"""

@@ -1611,9 +1611,8 @@ class CalcModel:
             if code in self._codeDict:
                 exist = False
                 for unit in self._codeDict[code]:
-                    if word == unit["word"]:
+                    if word == unit["word"] and source == unit["source"]:
                         unit["weight"] = weight
-                        unit["source"] = source
                         exist = True
                         break
                 if not exist:

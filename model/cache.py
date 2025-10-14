@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from type.dict import CacheUnit, DeleteUnit
+from type.dict import CacheUnit, WordTableUnit
 
 
 class CacheList(list[CacheUnit]):
@@ -80,7 +80,7 @@ class CacheList(list[CacheUnit]):
         return list(self)
 
 
-class DeleteCacheList(list[DeleteUnit]):
+class DeleteCacheList(list[WordTableUnit]):
     """删除缓存列表"""
 
     def find(self, word: str, code: str, weight: int | str) -> bool:

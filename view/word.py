@@ -3,7 +3,9 @@
 
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QMenu, QTableView
+from type.dict import WeightDict
 from model.word import WordTableModel
+from window.edit import EditWindow
 
 
 class WordTableView(QTableView):
@@ -11,6 +13,7 @@ class WordTableView(QTableView):
 
     rowDeleted = pyqtSignal(dict)
     passWeight = pyqtSignal(int)
+    editWeight = pyqtSignal(dict)
 
     def __init__(self, model: WordTableModel) -> None:
         super().__init__()
@@ -38,13 +41,24 @@ class WordTableView(QTableView):
         viewport = self.viewport()
         if viewport:
             menu = QMenu()
+            editAction = menu.addAction("编辑权重")
             weightAction = menu.addAction("传递权重")
             deleteAction = menu.addAction("删除词条")
 
             row = index.row()
             action = menu.exec(viewport.mapToGlobal(pos))
 
-            if action == weightAction:
+            if action == editAction:
+                weightDict: WeightDict = {
+                    "max": self._model.getFirstRowWeight(),
+                    "min": self._model.getLastRowWeight(),
+                }
+                editWindow = EditWindow(self._model.getRow(row), weightDict)
+                if editWindow.exec():
+                    result = editWindow.getResult()
+                    if result is not None:
+                        self.editWeight.emit(result)
+            elif action == weightAction:
                 weight = self._model.getWeight(row)
                 self.passWeight.emit(weight)
             elif action == deleteAction:

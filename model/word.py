@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt
-from type.dict import CodeTableUnit, DeleteUnit
+from type.dict import CodeTableUnit, WordTableUnit
 
 
 class WordTableModel(QAbstractTableModel):
@@ -116,13 +116,18 @@ class WordTableModel(QAbstractTableModel):
         except (ValueError, TypeError):
             return 0
 
-    def removeRow(self, row, parent=QModelIndex()) -> DeleteUnit:
+    def removeRow(self, row, parent=QModelIndex()) -> WordTableUnit:
         """删除行数据"""
         self.beginRemoveRows(parent, row, row)
         removedData = self._data[row]
         del self._data[row]
         self.endRemoveRows()
-        return DeleteUnit({**removedData, "code": self._code})
+        return WordTableUnit({**removedData, "code": self._code})
+
+    def getRow(self, row: int) -> WordTableUnit:
+        """获取行数据"""
+        rowData = self._data[row]
+        return WordTableUnit({**rowData, "code": self._code})
 
     def getWeight(self, row) -> int:
         """获取行权重"""

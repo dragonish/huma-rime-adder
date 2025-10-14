@@ -10,7 +10,7 @@ from loguru import logger
 from type.dict import (
     CacheUnit,
     CodeTableUnit,
-    DeleteUnit,
+    WordTableUnit,
     CodeUnit,
     EncodeResult,
     SymbolsUnit,
@@ -76,15 +76,15 @@ class CalcModel:
         self._isParseSymbols = False  # 是否已解析符号码表
 
         self._tigressCached: list[CacheUnit] = []  # 虎码词条缓存
-        self._tigressDeleteCached: list[DeleteUnit] = []  # 虎码词条删除缓存
+        self._tigressDeleteCached: list[WordTableUnit] = []  # 虎码词条删除缓存
         self._simpleCached: list[CacheUnit] = []  # 简码缓存
-        self._simpleDeleteCached: list[DeleteUnit] = []  # 简码删除缓存
+        self._simpleDeleteCached: list[WordTableUnit] = []  # 简码删除缓存
         self._phrasesCached: list[CacheUnit] = []  # 词组缓存
-        self._phrasesDeleteCached: list[DeleteUnit] = []  # 词组删除缓存
+        self._phrasesDeleteCached: list[WordTableUnit] = []  # 词组删除缓存
         self._charactersCached: list[CacheUnit] = []  # 单字缓存
-        self._charactersDeleteCached: list[DeleteUnit] = []  # 单字删除缓存
+        self._charactersDeleteCached: list[WordTableUnit] = []  # 单字删除缓存
         self._englishCached: list[CacheUnit] = []  # 英文缓存
-        self._englishDeleteCached: list[DeleteUnit] = []  # 英文删除缓存
+        self._englishDeleteCached: list[WordTableUnit] = []  # 英文删除缓存
         self._charsetCached: set[str] = set()  # 字集缓存
         self._nameCached: dict[str, list[str]] = {}  # 原名缓存
         self._emojiCached: dict[str, list[str]] = {}  # 表情缓存
@@ -1640,7 +1640,7 @@ class CalcModel:
 
         return cacheStatus
 
-    def delete(self, item: DeleteUnit):
+    def delete(self, item: WordTableUnit):
         """删除词条
 
         Args:
@@ -1700,6 +1700,100 @@ class CalcModel:
                             weight=weight,
                         )
                         break
+
+    def edit(self, item: WordTableUnit) -> CacheStatus:
+        """编辑已有词条的权重"""
+        cacheStatus: CacheStatus = CacheStatus.UNKNOWN
+        word = item["word"]
+        code = item["code"]
+        weight = item["weight"]
+        source = item["source"]
+        isEnglish = source == self._englishSourceName
+        if isEnglish:
+            # 缓存至英文表中
+            self._englishCached.append({"word": word, "code": code, "weight": weight})
+
+            cacheStatus = CacheStatus.ENGLISH
+            logger.debug(
+                "缓存至英文码表: {word}({code}) - {weight}",
+                word=word,
+                code=code,
+                weight=weight,
+            )
+
+            # 更新当前英文字典
+            for unit in self._englishDict[code]:
+                if word == unit["word"]:
+                    unit["weight"] = weight
+                    break
+        else:
+            match source:
+                case self._simpleSourceName:
+                    # 缓存至简词表中
+                    self._simpleCached.append(
+                        {"word": word, "code": code, "weight": weight}
+                    )
+                    cacheStatus = CacheStatus.SIMPLE
+                    logger.debug(
+                        "缓存至简词码表: {word}({code}) - {weight}",
+                        word=word,
+                        code=code,
+                        weight=weight,
+                    )
+                case self._phrasesSourceName:
+                    self._phrasesCached.append(
+                        {
+                            "word": word,
+                            "code": code,
+                            "weight": weight,
+                        }
+                    )
+                    cacheStatus = CacheStatus.PHRASES
+                    logger.debug(
+                        "缓存至词组码表: {word}({code}) - {weight}",
+                        word=word,
+                        code=code,
+                        weight=weight,
+                    )
+                case self._charactersSourceName:
+                    self._charactersCached.append(
+                        {
+                            "word": word,
+                            "code": code,
+                            "weight": weight,
+                        }
+                    )
+                    cacheStatus = CacheStatus.CHARACTERS
+                    logger.debug(
+                        "缓存至单字码表: {word}({code}) - {weight}",
+                        word=word,
+                        code=code,
+                        weight=weight,
+                    )
+                case self._mainSourceName:
+                    self._tigressCached.append(
+                        {
+                            "word": word,
+                            "code": code,
+                            "weight": weight,
+                        }
+                    )
+                    cacheStatus = CacheStatus.MAIN
+                    logger.debug(
+                        "缓存至主码表: {word}({code}) - {weight}",
+                        word=word,
+                        code=code,
+                        weight=weight,
+                    )
+
+            # 更新当前字典
+            for unit in self._codeDict[code]:
+                if word == unit["word"] and source == unit["source"]:
+                    unit["weight"] = weight
+                    break
+
+            # ? 此处不应添加字集条目
+        return cacheStatus
 
     def getWorkDir(self) -> str:
         """获取工作目录"""

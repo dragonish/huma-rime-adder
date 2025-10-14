@@ -14,7 +14,7 @@ class CodeTableUnit(CodeUnit):
     range: bool
 
 
-class DeleteUnit(CodeTableUnit):
+class WordTableUnit(CodeTableUnit):
     code: str
 
 
@@ -57,3 +57,8 @@ class Config(TypedDict):
     input: str
     encode: str
     tigress: TigressFiles
+
+
+class WeightDict(TypedDict):
+    max: int
+    min: int

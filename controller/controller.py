@@ -9,7 +9,7 @@ from window.window import AdderWindow
 from common.file import openDirectory
 from common.english import isPureEnglish
 from type.status import ExitCode, CacheStatus, MessageType
-from type.dict import DeleteUnit
+from type.dict import WordTableUnit
 
 
 class AdderController(QObject):
@@ -49,6 +49,7 @@ class AdderController(QObject):
             self._handleOpenWorkDirectoryEvent
         )
         self._view.wordTableView.rowDeleted.connect(self._handleWordDeleteEvent)
+        self._view.wordTableView.editWeight.connect(self._handleWordWeightEditEvent)
 
     def _handleCloseEvent(self, forceExit: bool):
         """处理关闭事件"""
@@ -161,10 +162,18 @@ class AdderController(QObject):
             self._view.clear()
             self._view.showMsg("已经变为空编码，请检查输入！")
 
-    def _handleWordDeleteEvent(self, deleteItem: DeleteUnit):
+    def _handleWordDeleteEvent(self, deleteItem: WordTableUnit):
         """处理删除词条事件"""
         self._model.delete(deleteItem)
         self._view.showMsg("已删除词条")
+
+    def _handleWordWeightEditEvent(self, item: WordTableUnit):
+        """处理词条列表权重值编辑事件"""
+        cacheStatus = self._model.edit(item)
+        code = item["code"]
+        results = self._model.query(code, cacheStatus == CacheStatus.ENGLISH)
+        self._view.setTableData(code, results)
+        self._view.showMsg("调整词条权重完成")
 
     def _handleNameQueryEvent(self):
         """处理查询原名事件"""

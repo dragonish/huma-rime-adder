@@ -25,9 +25,7 @@ class CacheList(list[CacheUnit]):
             tempDict[key] = (i, item)
 
         # 按照原始顺序重新构建列表
-        self[:] = [
-            item for _, (_, item) in sorted(tempDict.values(), key=lambda x: x[0])
-        ]
+        self[:] = [item for _, item in sorted(tempDict.values(), key=lambda x: x[0])]
 
     def push(self, val: CacheUnit) -> None:
         """添加缓存元素（如果已存在则更新权重，否则添加新元素）"""
@@ -52,21 +50,6 @@ class CacheList(list[CacheUnit]):
         """
         for cacheItem in self:
             if cacheItem["word"] == word and cacheItem["code"] == code:
-                super().remove(cacheItem)
-                return cacheItem
-        return None
-
-    def findCode(self, code: str) -> CacheUnit | None:
-        """查找并删除首个匹配编码的元素
-
-        Args:
-            code (str): 待查找编码
-
-        Returns:
-            CacheUnit | None: 返回匹配的元素
-        """
-        for cacheItem in self:
-            if cacheItem["code"] == code:
                 super().remove(cacheItem)
                 return cacheItem
         return None

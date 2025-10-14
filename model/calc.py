@@ -747,22 +747,23 @@ class CalcModel:
                 )
                 continue
 
-            item = cacheList.findCode(code)
+            item = cacheList.find(word, code)
             if item:
-                if deleteCacheList.find(item["word"], code, item["weight"]):
+                if deleteCacheList.find(word, code, item["weight"]):
                     # * 若存在于删除缓存中，则跳过处理
                     continue
                 input = columns.str.format(
-                    text=item["word"],
+                    text=word,
                     code=code,
                     weight=item["weight"],
                 )
                 writeContent.append(input)
                 logger.info(
-                    "将 {code} 的简词由 {old} 替换为 {new}",
+                    "将 {word}({code}) 的词频由 {old} 替换为 {new}",
+                    word=word,
                     code=code,
-                    old=word,
-                    new=item["word"],
+                    old=weight,
+                    new=item["weight"],
                 )
             else:
                 if deleteCacheList.find(word, code, weight):

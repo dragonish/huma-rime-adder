@@ -382,17 +382,6 @@ class CalcModel:
             len(self._englishDict),
         )
 
-    def getCleanWord(self, word: str) -> str:
-        """获取不带符号的字符串
-
-        Args:
-            word (str): 源字符串
-
-        Returns:
-            str: 不带符号的字符串
-        """
-        return word.translate(self._deleteCharsTable)
-
     def _getCode(self, char: str, codeSize: int) -> str:
         """获取单字的编码
 
@@ -925,6 +914,17 @@ class CalcModel:
             for line in writeContent:
                 f.write(line + "\n")
         logger.info("重写主码表完成")
+
+    def getCleanWord(self, word: str) -> str:
+        """获取不带符号的字符串
+
+        Args:
+            word (str): 源字符串
+
+        Returns:
+            str: 不带符号的字符串
+        """
+        return word.translate(self._deleteCharsTable)
 
     def tinyPinyinTable(self) -> bool:
         """整理拼音码表文件"""

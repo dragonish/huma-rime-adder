@@ -100,15 +100,18 @@ class AdderWindow(QMainWindow):
         self._weightInput = QSpinBox()
         self._weightInput.setMaximum(268435455)
         wordLayout.addWidget(self._weightInput, 2, 1)
-        self.topButton = NoFoucsButton("置顶")
-        wordLayout.addWidget(self.topButton, 2, 2)
+        topButton = NoFoucsButton("置顶")
+        topButton.clicked.connect(self._handleTopEvent)
+        wordLayout.addWidget(topButton, 2, 2)
         zeroButton = NoFoucsButton("清零")
         zeroButton.clicked.connect(self._clearWeight)
         wordLayout.addWidget(zeroButton, 2, 3)
-        self.maxButton = NoFoucsButton("最大")
-        wordLayout.addWidget(self.maxButton, 2, 4)
-        self.minButton = NoFoucsButton("最小")
-        wordLayout.addWidget(self.minButton, 2, 5)
+        maxButton = NoFoucsButton("最大")
+        maxButton.clicked.connect(self._handleMaxEvent)
+        wordLayout.addWidget(maxButton, 2, 4)
+        minButton = NoFoucsButton("最小")
+        minButton.clicked.connect(self._handleMinEvent)
+        wordLayout.addWidget(minButton, 2, 5)
 
         wordLayout.addWidget(QLabel("重码:"), 3, 0)
         self._wordTableModel = WordTableModel()
@@ -563,7 +566,7 @@ class AdderWindow(QMainWindow):
         """切换至指定标签页"""
         self._tabWidget.setCurrentIndex(index)
 
-    def findMaxWeight(self) -> int:
+    def _findMaxWeight(self) -> int:
         """获取重码列表的最大权重值
 
         Returns:
@@ -571,10 +574,40 @@ class AdderWindow(QMainWindow):
         """
         return self._wordTableModel.getFirstRowWeight()
 
-    def findMinWeight(self) -> int:
+    def _findMinWeight(self) -> int:
         """获取编码的最小权重值
 
         Returns:
             int: 权重值，未找到时为 `0`
         """
         return self._wordTableModel.getLastRowWeight()
+
+    def _handleTopEvent(self):
+        """处理权重值置顶事件"""
+        code = self.getCode()
+        if code:
+            weight = self._findMaxWeight() + 512
+            self.setWeight(weight)
+            self.showMsg("已置顶词条")
+        else:
+            self.showMsg("没有找到编码，请检查输入！")
+
+    def _handleMaxEvent(self):
+        """处理权重值最大化事件"""
+        code = self.getCode()
+        if code:
+            weight = self._findMaxWeight()
+            self.setWeight(weight)
+            self.showMsg("已最大化权重值")
+        else:
+            self.showMsg("没有找到编码，请检查输入！")
+
+    def _handleMinEvent(self):
+        """处理权重值最小化事件"""
+        code = self.getCode()
+        if code:
+            weight = self._findMinWeight()
+            self.setWeight(weight)
+            self.showMsg("已最小化权重值")
+        else:
+            self.showMsg("没有找到编码，请检查输入！")

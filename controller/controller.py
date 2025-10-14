@@ -39,9 +39,6 @@ class AdderController(QObject):
         self._view.queryButton.clicked.connect(self._handleQueryEvent)
         self._view.simpleButton.clicked.connect(self._handleSimpleEvent)
         self._view.indentButton.clicked.connect(self._handleIndentEvent)
-        self._view.topButton.clicked.connect(self._handleTopEvent)
-        self._view.maxButton.clicked.connect(self._handleMaxEvent)
-        self._view.minButton.clicked.connect(self._handleMinEvent)
         self._view.nameQueryButton.clicked.connect(self._handleNameQueryEvent)
         self._view.nameDoneButton.clicked.connect(self._handleNameDoneEvent)
         self._view.emojiQueryButton.clicked.connect(self._handleEmojiQueryEvent)
@@ -163,36 +160,6 @@ class AdderController(QObject):
         else:
             self._view.clear()
             self._view.showMsg("已经变为空编码，请检查输入！")
-
-    def _handleTopEvent(self):
-        """处理权重值置顶事件"""
-        code = self._view.getCode()
-        if code:
-            weight = self._view.findMaxWeight() + 512
-            self._view.setWeight(weight)
-            self._view.showMsg("已置顶词条")
-        else:
-            self._view.showMsg("没有找到编码，请检查输入！")
-
-    def _handleMaxEvent(self):
-        """处理权重值最大化事件"""
-        code = self._view.getCode()
-        if code:
-            weight = self._view.findMaxWeight()
-            self._view.setWeight(weight)
-            self._view.showMsg("已最大化权重值")
-        else:
-            self._view.showMsg("没有找到编码，请检查输入！")
-
-    def _handleMinEvent(self):
-        """处理权重值最小化事件"""
-        code = self._view.getCode()
-        if code:
-            weight = self._view.findMinWeight()
-            self._view.setWeight(weight)
-            self._view.showMsg("已最小化权重值")
-        else:
-            self._view.showMsg("没有找到编码，请检查输入！")
 
     def _handleWordDeleteEvent(self, deleteItem: DeleteUnit):
         """处理删除词条事件"""

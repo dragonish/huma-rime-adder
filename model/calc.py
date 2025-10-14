@@ -410,6 +410,31 @@ class CalcModel:
                 return False
         return True
 
+    def _isSimple(self, word: str, code: str) -> bool:
+        """是否为简词
+
+        Args:
+            word (str): 文本
+            code (str): 编码
+
+        Returns:
+            bool: `True` 表示为简词
+        """
+        wordLen = len(word)
+        codeLen = len(code)
+        if codeLen == 0 or codeLen > 3:
+            return False
+
+        if wordLen == 0:
+            return False
+        elif wordLen == 1:
+            return codeLen == 1
+        elif wordLen == 2:
+            return codeLen <= 2
+        elif wordLen == 3:
+            return codeLen <= 3
+        return False
+
     def _writeEnglish(self):
         """重写英文码表文件"""
         englishFile = self._tigressFiles["english"]
@@ -1511,7 +1536,7 @@ class CalcModel:
                 )
         elif cleanWord and code:
             source = self._mainSourceName
-            isSimp = len(cleanWord) > 2 and len(code) < 4  # 是否为简词
+            isSimp = self._isSimple(cleanWord, code)  # 是否为简词
 
             if isSimp:
                 if self._simpleFileStatus:

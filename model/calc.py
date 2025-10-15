@@ -425,15 +425,14 @@ class CalcModel:
         if codeLen == 0 or codeLen > 3:
             return False
 
-        if wordLen == 0:
+        if wordLen <= 1:
             return False
-        elif wordLen == 1:
-            return codeLen == 1
         elif wordLen == 2:
             return codeLen <= 2
         elif wordLen == 3:
             return codeLen <= 3
-        return False
+        else:
+            return codeLen == 1
 
     def _writeEnglish(self):
         """重写英文码表文件"""

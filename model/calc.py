@@ -1616,6 +1616,7 @@ class CalcModel:
                             code=code,
                             weight=weight,
                         )
+                        source = self._charactersSourceName
                     else:
                         self._tigressCached.append(
                             {
@@ -1631,6 +1632,7 @@ class CalcModel:
                             code=code,
                             weight=weight,
                         )
+                        source = self._mainSourceName
 
             # 更新当前字典
             if code in self._codeDict:

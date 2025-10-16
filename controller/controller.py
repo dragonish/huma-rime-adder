@@ -50,6 +50,7 @@ class AdderController(QObject):
         )
         self._view.wordTableView.rowDeleted.connect(self._handleWordDeleteEvent)
         self._view.wordTableView.editWeight.connect(self._handleWordWeightEditEvent)
+        self._view.checkThreeWords.clicked.connect(self._handleCheckThreeWords)
 
     def _handleCloseEvent(self, forceExit: bool):
         """处理关闭事件"""
@@ -255,6 +256,11 @@ class AdderController(QObject):
         """处理打开工作目录"""
         workDir = self._model.getWorkDir()
         openDirectory(workDir)
+
+    def _handleCheckThreeWords(self):
+        """处理校验三简词事件"""
+        self._model.checkShortThreeWords()
+        self._view.showMsg("校验三简词完毕，详情见日志")
 
     def _handleTinyPinyinEvent(self, type: MessageType):
         """处理整理拼音事件"""

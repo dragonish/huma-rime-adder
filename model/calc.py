@@ -1194,6 +1194,51 @@ class CalcModel:
         logger.info("整理拼音滤镜文件完毕")
         return True
 
+    def checkShortThreeWords(self):
+        """校验三简词"""
+        logger.info("开始校验三简词...")
+        self._parseMain()
+
+        for code in self._codeDict:
+            if len(code) == 3:
+                record: list[str] = []
+                hadWords = 0
+                hadOther = False
+                for c in self._codeDict[code]:
+                    w = self.getCleanWord(c["word"])
+                    if len(w) == 3:
+                        hadWords += 1
+                        record.append(w)
+                    elif self._getRange(w):
+                        hadOther = True
+                        record.append(w)
+
+                if (hadWords > 1) or (hadOther and hadWords > 0):
+                    logger.warning(
+                        "编码 {code} 存在冲突的词条: {list}", code=code, list=record
+                    )
+            elif len(code) == 4:
+                threeWords: list[str] = []
+                for c in self._codeDict[code]:
+                    w = self.getCleanWord(c["word"])
+                    if len(w) == 3:
+                        threeWords.append(w)
+                if len(threeWords) == 0:
+                    continue
+
+                tc = code[:3]
+                hadSimple = False
+                if tc in self._codeDict:
+                    for sc in self._codeDict[tc]:
+                        sw = self.getCleanWord(sc["word"])
+                        if len(sw) == 3 or self._getRange(sw):
+                            hadSimple = True
+                            break
+
+                if not hadSimple:
+                    logger.info("以下词条可编码成三简词: {}", threeWords)
+        logger.info("校验三简词完成")
+
     def fileChecker(self) -> str:
         """文件存在性检查器
 

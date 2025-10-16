@@ -286,29 +286,32 @@ class AdderWindow(QMainWindow):
             QLabel(f"日志文件: {LogManager.getLogFileLocation()}"), 3, 0, 2, 1
         )
 
+        self.checkThreeWords = NoFoucsButton("校验三简词")
+        otherLayout.addWidget(self.checkThreeWords, 4, 0, 2, 1)
+
         tinyPinyinButton = NoFoucsButton("整理拼音码表")
         tinyPinyinButton.clicked.connect(
             lambda: self._showTinyConfirmationDialog(MessageType.TINY_PINYIN_TABLE)
         )
-        otherLayout.addWidget(tinyPinyinButton, 4, 0, 2, 1)
+        otherLayout.addWidget(tinyPinyinButton, 5, 0, 2, 1)
 
         tinyPinyinTipButton = NoFoucsButton("整理拼音滤镜")
         tinyPinyinTipButton.clicked.connect(
             lambda: self._showTinyConfirmationDialog(MessageType.TINY_PINYIN_TIP)
         )
-        otherLayout.addWidget(tinyPinyinTipButton, 5, 0, 2, 1)
+        otherLayout.addWidget(tinyPinyinTipButton, 6, 0, 2, 1)
 
         self.openWorkDirectoryButton = NoFoucsButton("打开工作目录")
-        otherLayout.addWidget(self.openWorkDirectoryButton, 6, 0, 2, 1)
+        otherLayout.addWidget(self.openWorkDirectoryButton, 7, 0, 2, 1)
 
         openLogDirectoryButton = NoFoucsButton("打开日志目录")
         openLogDirectoryButton.clicked.connect(LogManager.openLogDirectory)
-        otherLayout.addWidget(openLogDirectoryButton, 7, 0, 2, 1)
+        otherLayout.addWidget(openLogDirectoryButton, 8, 0, 2, 1)
 
         forceExitButton = NoFoucsButton("强制退出")
         forceExitButton.setStyleSheet(BUTTON_RED)
         forceExitButton.clicked.connect(self._forceExit)
-        otherLayout.addWidget(forceExitButton, 8, 0, 2, 1)
+        otherLayout.addWidget(forceExitButton, 9, 0, 2, 1)
 
         otherWindow.setLayout(otherLayout)
         self._tabWidget.addTab(otherWindow, "其他")

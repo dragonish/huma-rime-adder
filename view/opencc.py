@@ -49,6 +49,5 @@ class OpenCCTableView(QTableView):
             row = index.row()
             action = menu.exec(viewport.mapToGlobal(pos))
 
-            match action:
-                case deleteAction:
-                    self._model.removeRow(row)
+            if action == deleteAction:
+                self._model.removeRow(row)

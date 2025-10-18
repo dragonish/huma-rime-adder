@@ -1205,13 +1205,14 @@ class CalcModel:
                 hadWords = 0
                 hadOther = False
                 for c in self._codeDict[code]:
-                    w = self.getCleanWord(c["word"])
+                    cw = c["word"]
+                    w = self.getCleanWord(cw)
                     if len(w) == 3:
                         hadWords += 1
-                        record.append(w)
+                        record.append(cw)
                     elif self._getRange(w):
                         hadOther = True
-                        record.append(w)
+                        record.append(cw)
 
                 if (hadWords > 1) or (hadOther and hadWords > 0):
                     logger.warning(
@@ -1222,7 +1223,7 @@ class CalcModel:
                 for c in self._codeDict[code]:
                     w = self.getCleanWord(c["word"])
                     if len(w) == 3:
-                        threeWords.append(w)
+                        threeWords.append(c["word"])
                 if len(threeWords) == 0:
                     continue
 

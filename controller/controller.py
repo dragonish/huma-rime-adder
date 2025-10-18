@@ -259,8 +259,24 @@ class AdderController(QObject):
 
     def _handleCheckThreeWords(self):
         """处理校验三简词事件"""
-        self._model.checkShortThreeWords()
-        self._view.showMsg("校验三简词完毕，详情见日志")
+        result = self._model.checkShortThreeWords()
+        conflictCount = len(result["conflictCodes"])
+        additionalCount = len(result["additionalEntries"])
+        if conflictCount > 0 or additionalCount > 0:
+            reply = self._view.showAutoHandleThreeWordsDialog(
+                conflictCount, additionalCount
+            )
+            if reply:
+                r = self._model.handleThreeWordsResult(result)
+                if r:
+                    self._tinyState = True
+                    self._view.showMsg("校验完毕并自动处理三简词至操作缓存，详情见日志")
+                else:
+                    self._view.showMsg("校验完毕但未自动处理三简词，请检查配置文件！")
+            else:
+                self._view.showMsg("校验三简词完毕，详情见日志")
+        else:
+            self._view.showMsg("校验三简词完毕，详情见日志")
 
     def _handleTinyPinyinEvent(self, type: MessageType):
         """处理整理拼音事件"""

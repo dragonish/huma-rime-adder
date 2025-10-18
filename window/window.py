@@ -36,6 +36,7 @@ from .style import (
     NoFoucsButton,
     ClickableLabel,
 )
+from .dialog import ConfirmDialog
 
 
 class AdderWindow(QMainWindow):
@@ -330,25 +331,9 @@ class AdderWindow(QMainWindow):
             case MessageType.TINY_PINYIN_TIP:
                 msg = "您确定要执行整理拼音滤镜操作吗？这将根据码表中的词组重新生成对应拼音提示，然后覆盖及重写拼音滤镜文件！"
 
-        msgBox = QMessageBox(
-            QMessageBox.Icon.Question,
-            "确认操作",
-            msg,
-            QMessageBox.StandardButton.NoButton,
-            self,
-        )
-
-        yesButton = msgBox.addButton(QMessageBox.StandardButton.Yes)
-        if yesButton:
-            yesButton.setText("是")
-        noButton = msgBox.addButton(QMessageBox.StandardButton.No)
-        if noButton:
-            noButton.setText("否")
-        msgBox.setDefaultButton(noButton)
-        msgBox.setEscapeButton(noButton)
-
+        msgBox = ConfirmDialog(msg, self)
         reply = msgBox.exec()
-        if reply == QMessageBox.StandardButton.Yes:
+        if reply:
             self.tinySignal.emit(type)
 
     def showEvent(self, event: QShowEvent):
@@ -369,6 +354,15 @@ class AdderWindow(QMainWindow):
             self.closeSignal.emit(self._forceExitState)  # 触发关闭信号
         except Exception as e:
             logger.error("发出关闭信号出错: {}", str(e))
+
+    def showAutoHandleThreeWordsDialog(
+        self, conflictCount: int, additionalCount: int
+    ) -> bool:
+        """自动处理三简词弹窗"""
+        msg = f"校验完毕，您确定要继续执行自动处理三简词操作吗？这将移除冲突的 {conflictCount} 组三简词以及补全缺失的 {additionalCount} 组三简词！"
+        msgBox = ConfirmDialog(msg, self)
+        reply = msgBox.exec()
+        return reply
 
     def hideNameTab(self) -> None:
         """隐藏原名标签页"""

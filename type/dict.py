@@ -62,3 +62,8 @@ class Config(TypedDict):
 class WeightDict(TypedDict):
     max: int
     min: int
+
+
+class ThreeWordsCheckedResult(TypedDict):
+    conflictCodes: dict[str, list[str]]
+    additionalEntries: dict[str, str]

@@ -15,6 +15,7 @@ from type.dict import (
     EncodeResult,
     SymbolsUnit,
     TigressFiles,
+    ThreeWordsCheckedResult,
 )
 from type.status import ExitCode, CacheStatus
 from model.columns import ColumnsModel
@@ -1194,10 +1195,13 @@ class CalcModel:
         logger.info("整理拼音滤镜文件完毕")
         return True
 
-    def checkShortThreeWords(self):
+    def checkShortThreeWords(self) -> ThreeWordsCheckedResult:
         """校验三简词"""
         logger.info("开始校验三简词...")
         self._parseMain()
+
+        result: ThreeWordsCheckedResult = {"conflictCodes": {}, "additionalEntries": {}}
+        additionalEntries: dict[str, list[str]] = {}
 
         for code in self._codeDict:
             if len(code) == 3:
@@ -1216,8 +1220,13 @@ class CalcModel:
 
                 if (hadWords > 1) or (hadOther and hadWords > 0):
                     logger.warning(
-                        "编码 {code} 存在冲突的词条: {list}", code=code, list=record
+                        "编码 {code} 中存在冲突的词条: {list}", code=code, list=record
                     )
+
+                if hadOther and hadWords > 0:
+                    result["conflictCodes"][code] = [
+                        x for x in record if len(self.getCleanWord(x)) == 3
+                    ]
             elif len(code) == 4:
                 threeWords: list[str] = []
                 for c in self._codeDict[code]:
@@ -1237,8 +1246,68 @@ class CalcModel:
                             break
 
                 if not hadSimple:
-                    logger.info("以下词条可编码成三简词: {}", threeWords)
+                    if tc in additionalEntries:
+                        additionalEntries[tc].extend(threeWords)
+                    else:
+                        additionalEntries[tc] = threeWords.copy()
+
+        # 过滤一遍需要补充的结果
+        for ae in additionalEntries:
+            logger.info(
+                "可选编码成 {code} 的词条: {words}",
+                code=ae,
+                words=additionalEntries[ae],
+            )
+            if len(additionalEntries[ae]) != 1:
+                continue
+            result["additionalEntries"][ae] = additionalEntries[ae][0]
+
         logger.info("校验三简词完成")
+        return result
+
+    def handleThreeWordsResult(self, input: ThreeWordsCheckedResult) -> bool:
+        """自动处理三简词的校验结果"""
+        if not self._simpleFileStatus:
+            return False
+
+        conflict = input["conflictCodes"]
+        additional = input["additionalEntries"]
+
+        for co in conflict:
+            if not co in self._codeDict:
+                continue
+            for item in self._codeDict[co][:]:
+                if item["word"] in conflict[co]:
+                    self._simpleDeleteCached.append(
+                        {
+                            **item,
+                            "code": co,
+                        }
+                    )
+                    self._codeDict[co].remove(item)
+                    logger.debug(
+                        "待删除三简词: {word}({code}) - {source}",
+                        word=item["word"],
+                        code=co,
+                        source=item["source"],
+                    )
+
+        for ad in additional:
+            # 缓存至简词表中
+            a = additional[ad]
+            self._simpleCached.append({"word": a, "code": ad, "weight": 0})
+            logger.debug("缓存至简词码表: {word}({code}) - 0", word=a, code=ad)
+            # 更新当前字典
+            if ad in self._codeDict:
+                self._codeDict[ad].append(
+                    {"word": a, "weight": 0, "source": self._simpleSourceName}
+                )
+            else:
+                self._codeDict[ad] = [
+                    {"word": a, "weight": 0, "source": self._simpleSourceName}
+                ]
+
+        return True
 
     def fileChecker(self) -> str:
         """文件存在性检查器

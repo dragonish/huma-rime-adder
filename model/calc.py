@@ -155,7 +155,7 @@ class CalcModel:
         logger.info(
             "读取到 {size} 个其他码表名称，分别为: {name}",
             size=len(importTables),
-            name=" ".join(importTables),
+            name=importTables,
         )
 
         # 解析所导入的其他码表文件

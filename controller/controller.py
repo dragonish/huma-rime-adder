@@ -87,6 +87,8 @@ class AdderController(QObject):
                     self._view.showMsg("添加至英文码表")
                 case CacheStatus.ENGLISH_EXCEPTION:
                     self._view.showMsg("无英文码表，未添加词条！")
+                case CacheStatus.INVALID_CODE:
+                    self._view.showMsg("所输入编码的格式有问题！")
 
             autoEncode = False
             if cacheStatus.isPhrases():

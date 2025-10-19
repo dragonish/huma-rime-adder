@@ -24,6 +24,7 @@ from common.file import getTableSource, readFile
 from common.conversion import safeGet, strToInt
 from common.pinyin import getPinyin, getTonePinyin
 from common.english import isPureEnglish
+from common.number import isPureNumericStr
 
 
 class CalcModel:
@@ -1601,6 +1602,9 @@ class CalcModel:
         Returns:
             WordCacheStatus: 词条添加状态
         """
+        if isPureNumericStr(code):
+            return CacheStatus.INVALID_CODE
+
         cacheStatus: CacheStatus = CacheStatus.UNKNOWN
         cleanWord = self.getCleanWord(word)
         isEnglish = isPureEnglish(cleanWord)  # 是否为英文单词

@@ -21,12 +21,17 @@ class CacheStatus(Enum):
     SIMPLE_EXCEPTION = auto()
     ENGLISH = auto()
     ENGLISH_EXCEPTION = auto()
+    INVALID_CODE = auto()
 
     def isPhrases(self) -> bool:
         return self in (CacheStatus.MAIN, CacheStatus.PHRASES)
 
     def isException(self) -> bool:
-        return self in (CacheStatus.SIMPLE_EXCEPTION, CacheStatus.ENGLISH_EXCEPTION)
+        return self in (
+            CacheStatus.SIMPLE_EXCEPTION,
+            CacheStatus.ENGLISH_EXCEPTION,
+            CacheStatus.INVALID_CODE,
+        )
 
 
 class MessageType(Enum):

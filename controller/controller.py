@@ -118,7 +118,6 @@ class AdderController(QObject):
             self._view.setTableData(info["code"], results)
             self._view.showMsg("编码成功")
         else:
-            self._view.clear()
             self._view.showMsg("未编码，请检查输入！")
 
     def _handleSimpleEvent(self):
@@ -134,7 +133,6 @@ class AdderController(QObject):
             self._view.setTableData(info["code"], results)
             self._view.showMsg("简码编码成功")
         else:
-            self._view.clear()
             self._view.showMsg("未编码，请检查输入！")
 
     def _handleQueryEvent(self):
@@ -147,7 +145,6 @@ class AdderController(QObject):
             self._view.setTableData(code, results)
             self._view.showMsg("查询完成")
         else:
-            self._view.clear()
             self._view.showMsg("没有找到编码，请检查输入！")
 
     def _handleIndentEvent(self):
@@ -162,8 +159,7 @@ class AdderController(QObject):
             self._view.setTableData(indentCode, results)
             self._view.showMsg("缩进查询完成")
         else:
-            self._view.clear()
-            self._view.showMsg("已经变为空编码，请检查输入！")
+            self._view.showMsg("将缩进成空的编码，请检查输入！")
 
     def _handleWordDeleteEvent(self, deleteItem: WordTableUnit):
         """处理删除词条事件"""

@@ -1188,11 +1188,15 @@ class CalcModel:
                     wordSet.add(word)
         logger.info("解析完毕，读取到 {} 个词组", len(wordSet))
         logger.info("重写拼音滤镜文件...")
+
+        # 使用排序后的列表确保顺序一致
+        wordList = sorted(wordSet)
         with io.open(pinyinOpenccFile, mode="w", newline="\n", encoding="utf-8") as f:
-            for unit in wordSet:
+            for unit in wordList:
                 tonePinyin = getTonePinyin(self.getCleanWord(unit))
                 input = unit + "\t〔" + tonePinyin + "〕\n"
                 f.write(input)
+
         logger.info("整理拼音滤镜文件完毕")
         return True
 

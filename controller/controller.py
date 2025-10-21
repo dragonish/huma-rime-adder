@@ -34,6 +34,7 @@ class AdderController(QObject):
 
         self._view.closeSignal.connect(self._handleCloseEvent)  # 监听关闭信号
         self._view.tinySignal.connect(self._handleTinyPinyinEvent)
+        self._view.importSignal.connect(self._handleImportWordsEvent)
         self._view.encodeButton.clicked.connect(self._handleEncodeEvent)
         self._view.addButton.clicked.connect(self._handleAddEvent)
         self._view.queryButton.clicked.connect(self._handleQueryEvent)
@@ -291,6 +292,14 @@ class AdderController(QObject):
                     self._tinyState = True
                 else:
                     self._view.showMsg("未整理拼音滤镜，请检查配置文件！")
+
+    def _handleImportWordsEvent(self, filePath: str):
+        """处理导入词库文件事件"""
+        encodeState = self._model.encodeFile(filePath)
+        if encodeState:
+            self._view.showMsg("编码词库文件完毕")
+        else:
+            self._view.showMsg("未编码文件，请检查输入！")
 
     def encodeWord(self, word: str):
         """编码词条

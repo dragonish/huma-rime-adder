@@ -45,8 +45,13 @@ if __name__ == "__main__":
         sys.exit(ExitCode.ERROR.value)  #! 退出程序
 
     if config["encode"]:
-        exitCode = model.encodeFile(config["encode"])
-        logger.info("程序结束运行，退出代码: {}", exitCode.value)
+        encodeState = model.encodeFile(config["encode"])
+        exitCode = ExitCode.NOTHING
+        if encodeState:
+            exitCode = model.writer()
+            logger.info("程序结束运行，退出代码: {}", exitCode.value)
+        else:
+            logger.warning("未编码词库文件，程序结束运行，退出代码: {}", exitCode.value)
         sys.exit(exitCode.value)
 
     adderApp = Application.initialize(sys.argv)

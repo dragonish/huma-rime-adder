@@ -6,11 +6,11 @@ from loguru import logger
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QCloseEvent, QIcon, QPixmap, QShowEvent
 from PyQt6.QtWidgets import (
+    QFileDialog,
     QGridLayout,
     QHBoxLayout,
     QLabel,
     QMainWindow,
-    QMessageBox,
     QSpacerItem,
     QSizePolicy,
     QSpinBox,
@@ -43,6 +43,7 @@ class AdderWindow(QMainWindow):
     """加词器主窗口"""
 
     closeSignal = pyqtSignal(bool)  # 关闭信号，参数表示是否强制退出
+    importSignal = pyqtSignal(str)  # 导入词库文件信号
     tinySignal = pyqtSignal(MessageType)  # 整理拼音滤镜信号
 
     def __init__(self) -> None:
@@ -258,7 +259,7 @@ class AdderWindow(QMainWindow):
         otherWindow = QWidget(self)
         otherLayout = QGridLayout()
 
-        otherLayout.addWidget(QLabel(f"程序版本: {APP_VERSION}"), 0, 0, 2, 1)
+        otherLayout.addWidget(QLabel(f"程序版本: {APP_VERSION}"), 0, 0)
 
         sourceWidget = QWidget()
         sourceLayout = QHBoxLayout()
@@ -278,41 +279,45 @@ class AdderWindow(QMainWindow):
         )
         sourceLayout.addItem(spacer)
         sourceWidget.setLayout(sourceLayout)
-        otherLayout.addWidget(sourceWidget, 1, 0, 2, 1)
+        otherLayout.addWidget(sourceWidget, 1, 0)
 
         self.workDirectoryLabel = QLabel("")
-        otherLayout.addWidget(self.workDirectoryLabel, 2, 0, 2, 1)
+        otherLayout.addWidget(self.workDirectoryLabel, 2, 0)
 
         otherLayout.addWidget(
-            QLabel(f"日志文件: {LogManager.getLogFileLocation()}"), 3, 0, 2, 1
+            QLabel(f"日志文件: {LogManager.getLogFileLocation()}"), 3, 0
         )
 
+        importWordsButton = NoFoucsButton("导入词库文件")
+        importWordsButton.clicked.connect(self._openFileDialog)
+        otherLayout.addWidget(importWordsButton, 4, 0)
+
         self.checkThreeWords = NoFoucsButton("校验三简词")
-        otherLayout.addWidget(self.checkThreeWords, 4, 0, 2, 1)
+        otherLayout.addWidget(self.checkThreeWords, 5, 0)
 
         tinyPinyinButton = NoFoucsButton("整理拼音码表")
         tinyPinyinButton.clicked.connect(
             lambda: self._showTinyConfirmationDialog(MessageType.TINY_PINYIN_TABLE)
         )
-        otherLayout.addWidget(tinyPinyinButton, 5, 0, 2, 1)
+        otherLayout.addWidget(tinyPinyinButton, 6, 0)
 
         tinyPinyinTipButton = NoFoucsButton("整理拼音滤镜")
         tinyPinyinTipButton.clicked.connect(
             lambda: self._showTinyConfirmationDialog(MessageType.TINY_PINYIN_TIP)
         )
-        otherLayout.addWidget(tinyPinyinTipButton, 6, 0, 2, 1)
+        otherLayout.addWidget(tinyPinyinTipButton, 7, 0)
 
         self.openWorkDirectoryButton = NoFoucsButton("打开工作目录")
-        otherLayout.addWidget(self.openWorkDirectoryButton, 7, 0, 2, 1)
+        otherLayout.addWidget(self.openWorkDirectoryButton, 8, 0)
 
         openLogDirectoryButton = NoFoucsButton("打开日志目录")
         openLogDirectoryButton.clicked.connect(LogManager.openLogDirectory)
-        otherLayout.addWidget(openLogDirectoryButton, 8, 0, 2, 1)
+        otherLayout.addWidget(openLogDirectoryButton, 9, 0)
 
         forceExitButton = NoFoucsButton("强制退出")
         forceExitButton.setStyleSheet(BUTTON_RED)
         forceExitButton.clicked.connect(self._forceExit)
-        otherLayout.addWidget(forceExitButton, 9, 0, 2, 1)
+        otherLayout.addWidget(forceExitButton, 10, 0)
 
         otherWindow.setLayout(otherLayout)
         self._tabWidget.addTab(otherWindow, "其他")
@@ -608,3 +613,11 @@ class AdderWindow(QMainWindow):
             self.showMsg("已最小化权重值")
         else:
             self.showMsg("没有找到编码，请检查输入！")
+
+    def _openFileDialog(self):
+        """打开文件选择对话框"""
+        filePath, _ = QFileDialog.getOpenFileName(
+            self, "选择词库文件", "", "文本文件 (*.txt);;所有文件 (*)"
+        )
+        if filePath:
+            self.importSignal.emit(filePath)

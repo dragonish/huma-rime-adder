@@ -436,6 +436,66 @@ class CalcModel:
         else:
             return codeLen == 1
 
+    def _updateEnglishDict(self, code: str, word: str, weight: int):
+        """更新英文字典"""
+        if code in self._englishDict:
+            exist = False
+            for unit in self._englishDict[code]:
+                if word == unit["word"]:
+                    unit["weight"] = weight
+                    exist = True
+                    break
+            if not exist:
+                self._englishDict[code].append(
+                    {
+                        "word": word,
+                        "weight": weight,
+                        "source": self._englishSourceName,
+                    }
+                )
+        else:
+            self._englishDict[code] = [
+                {
+                    "word": word,
+                    "weight": weight,
+                    "source": self._englishSourceName,
+                }
+            ]
+
+    def _updateCodeDict(self, code: str, word: str, weight: int, source: str):
+        """更新编码字典"""
+        if code in self._codeDict:
+            exist = False
+            for unit in self._codeDict[code]:
+                if word == unit["word"] and source == unit["source"]:
+                    unit["weight"] = weight
+                    exist = True
+                    break
+            if not exist:
+                self._codeDict[code].append(
+                    {
+                        "word": word,
+                        "weight": weight,
+                        "source": source,
+                    }
+                )
+        else:
+            self._codeDict[code] = [
+                {
+                    "word": word,
+                    "weight": weight,
+                    "source": source,
+                }
+            ]
+
+        # 处理字集
+        cleanWord = self.getCleanWord(word)
+        for ch in cleanWord:
+            if not self._getRange(ch):
+                self._charsetCached.add(ch)
+                self._charset.add(ch)
+                logger.debug("缓存至字集码表: {word}", word=ch)
+
     def _writeEnglish(self):
         """重写英文码表文件"""
         englishFile = self._tigressFiles["english"]
@@ -1629,29 +1689,7 @@ class CalcModel:
                 )
 
                 # 更新当前英文字典
-                if code in self._englishDict:
-                    exist = False
-                    for unit in self._englishDict[code]:
-                        if word == unit["word"]:
-                            unit["weight"] = weight
-                            exist = True
-                            break
-                    if not exist:
-                        self._englishDict[code].append(
-                            {
-                                "word": word,
-                                "weight": weight,
-                                "source": self._englishSourceName,
-                            }
-                        )
-                else:
-                    self._englishDict[code] = [
-                        {
-                            "word": word,
-                            "weight": weight,
-                            "source": self._englishSourceName,
-                        }
-                    ]
+                self._updateEnglishDict(code, word, weight)
             else:
                 cacheStatus = CacheStatus.ENGLISH_EXCEPTION
                 logger.warning(
@@ -1758,35 +1796,7 @@ class CalcModel:
                         source = self._mainSourceName
 
             # 更新当前字典
-            if code in self._codeDict:
-                exist = False
-                for unit in self._codeDict[code]:
-                    if word == unit["word"] and source == unit["source"]:
-                        unit["weight"] = weight
-                        exist = True
-                        break
-                if not exist:
-                    self._codeDict[code].append(
-                        {
-                            "word": word,
-                            "weight": weight,
-                            "source": source,
-                        }
-                    )
-            else:
-                self._codeDict[code] = [
-                    {
-                        "word": word,
-                        "weight": weight,
-                        "source": source,
-                    }
-                ]
-
-            for ch in cleanWord:
-                if not self._getRange(ch):
-                    self._charsetCached.add(ch)
-                    self._charset.add(ch)
-                    logger.debug("缓存至字集码表: {word}", word=ch)
+            self._updateCodeDict(code, word, weight, source)
 
         return cacheStatus
 
@@ -2003,27 +2013,29 @@ class CalcModel:
 
         return ExitCode.SUCCESS if writeState else ExitCode.NOTHING
 
-    def encodeFile(self, file: str) -> ExitCode:
-        """编码词条文件
+    def encodeFile(self, file: str) -> bool:
+        """编码词库文件
 
         Args:
-            file (str): 词条输入文件
+            file (str): 输入词库文件
 
         Returns:
-            ExitCode: 退出状态
+            bool: 是否成功处理
         """
         if not os.path.exists(file):
-            logger.error("词条输入文件不存在")
-            return ExitCode.ERROR
+            logger.error("输入的词库文件不存在: {}", file)
+            return False
 
         inputSet = set(readFile(file))
         if len(inputSet) == 0:
-            logger.warning("词条输入文件内容为空")
-            return ExitCode.NOTHING
+            logger.warning("输入词库文件内容为空: {}", file)
+            return False
 
         logger.info("共读取到 {} 个输入词条", len(inputSet))
 
-        for line in inputSet:
+        count = 0
+        wordList = sorted(inputSet)
+        for line in wordList:
             item = line.strip()
             if len(item) <= 1:
                 continue
@@ -2038,20 +2050,29 @@ class CalcModel:
                 self._englishCached.append(
                     {"word": item, "code": res["code"], "weight": 0}
                 )
+                logger.debug(
+                    "缓存至英文码表: {word}({code}) - {weight}",
+                    word=item,
+                    code=res["code"],
+                    weight=0,
+                )
+                # 更新当前英文字典
+                self._updateEnglishDict(res["code"], item, 0)
             else:
                 self._tigressCached.append(
                     {"word": item, "code": res["code"], "weight": 0}
                 )
+                logger.debug(
+                    "缓存至主码表: {word}({code}) - {weight}",
+                    word=item,
+                    code=res["code"],
+                    weight=0,
+                )
+                # 更新当前编码字典
+                self._updateCodeDict(res["code"], item, 0, self._mainSourceName)
 
-        writeState = False
-        if len(self._englishCached) > 0:
-            self._writeEnglish()
-            writeState = True
-        if len(self._tigressCached) > 0:
-            self._writeMain()
-            writeState = True
-        logger.info(
-            "共批量写入 {} 个词条", len(self._englishCached) + len(self._tigressCached)
-        )
+            count += 1
 
-        return ExitCode.SUCCESS if writeState else ExitCode.NOTHING
+        logger.info("共批量新增 {} 个词条", count)
+
+        return True

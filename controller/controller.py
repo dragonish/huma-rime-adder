@@ -2,15 +2,33 @@
 # coding: utf-8
 
 from loguru import logger
-from PyQt6.QtCore import QObject
+from PyQt6.QtCore import QObject, QThreadPool
 from app.application import exitApp
 from model.calc import CalcModel
 from window.window import AdderWindow
 from common.file import openDirectory
-from common.english import isPureEnglish
 from common.conversion import getCleanWord
 from type.status import ExitCode, CacheStatus, MessageType
-from type.dict import WordTableUnit
+from type.dict import (
+    CodeTableUnit,
+    WordTableUnit,
+    EncodeResult,
+    SymbolsUnit,
+    ThreeWordsCheckedResult,
+)
+from .command import (
+    CommandRunable,
+    EncodeCommand,
+    SimpleCommand,
+    QueryCommand,
+    NameQueryCommand,
+    EmojiQueryCommand,
+    SymbolsQueryCommand,
+    ExtraQueryCommand,
+    CheckThreeCommand,
+    TinyPinyinCommand,
+    ImportWordsCommand,
+)
 
 
 class AdderController(QObject):
@@ -20,6 +38,7 @@ class AdderController(QObject):
         super().__init__()
         self._model = model
         self._view = view
+        self._threadPool = QThreadPool()
         self._tinyState = False
 
         if not self._model.getNameFileStatus():
@@ -107,10 +126,30 @@ class AdderController(QObject):
             elif not cacheStatus.isException():
                 self._view.clear()
 
+    def _disableView(self, msg: str | None = None):
+        """禁用视图并显示消息"""
+        if msg:
+            self._view.showMsg(msg)
+        self._view.setEnabled(False)
+
+    def _enableView(self, msg: str | None = None):
+        """启用视图并显示消息"""
+        self._view.setEnabled(True)
+        if msg:
+            self._view.showMsg(msg)
+
     def _handleEncodeEvent(self):
         """处理词条编码事件"""
         word = self._view.getWord()
-        info = self._model.encode(word)
+        self._disableView("编码词条中...")
+        command = EncodeCommand(self._model)
+        command.finished.connect(self._onEncodeFinished)
+        runable = CommandRunable(command, word)
+        self._threadPool.start(runable)
+
+    def _onEncodeFinished(self, info: EncodeResult):
+        """词条编码完成"""
+        self._enableView()
         self._view.setEncodeInfo(info)
         if info["code"]:
             results = self._model.query(info["code"], info["isEnglish"])
@@ -125,7 +164,15 @@ class AdderController(QObject):
     def _handleSimpleEvent(self):
         """处理词条简码事件"""
         word = self._view.getWord()
-        info = self._model.simple(word)
+        self._disableView("为词条创建简码中...")
+        command = SimpleCommand(self._model)
+        command.finished.connect(self._onSimpleFinished)
+        runable = CommandRunable(command, word)
+        self._threadPool.start(runable)
+
+    def _onSimpleFinished(self, info: EncodeResult):
+        """简码编码完成"""
+        self._enableView()
         self._view.setEncodeInfo(info)
         if info["code"]:
             results = self._model.query(info["code"], info["isEnglish"])
@@ -140,12 +187,13 @@ class AdderController(QObject):
     def _handleQueryEvent(self):
         """处理编码查询事件"""
         code = self._view.getCode()
-        word = self._view.getWord()
-        isEnglish = isPureEnglish(getCleanWord(word))
         if code:
-            results = self._model.query(code, isEnglish)
-            self._view.setTableData(code, results)
-            self._view.showMsg("查询完成")
+            word = self._view.getWord()
+            self._disableView("查询编码中...")
+            command = QueryCommand(self._model)
+            command.finished.connect(self._onQueryFinished)
+            runable = CommandRunable(command, code, word)
+            self._threadPool.start(runable)
         else:
             self._view.showMsg("没有找到编码，请检查输入！")
 
@@ -153,15 +201,22 @@ class AdderController(QObject):
         """处理缩进查询事件"""
         code = self._view.getCode()
         indentCode = code[:-1]
-        word = self._view.getWord()
-        isEnglish = isPureEnglish(getCleanWord(word))
         if indentCode:
+            word = self._view.getWord()
             self._view.setCode(indentCode)
-            results = self._model.query(indentCode, isEnglish)
-            self._view.setTableData(indentCode, results)
-            self._view.showMsg("缩进查询完成")
+            self._disableView("查询缩进编码中...")
+            command = QueryCommand(self._model)
+            command.finished.connect(self._onQueryFinished)
+            runable = CommandRunable(command, indentCode, word)
+            self._threadPool.start(runable)
         else:
             self._view.showMsg("将缩进成空的编码，请检查输入！")
+
+    def _onQueryFinished(self, result: tuple[str, list[CodeTableUnit]]):
+        """查询完成"""
+        code, results = result
+        self._enableView("查询完成")
+        self._view.setTableData(code, results)
 
     def _handleWordDeleteEvent(self, deleteItem: WordTableUnit):
         """处理删除词条事件"""
@@ -179,9 +234,16 @@ class AdderController(QObject):
     def _handleNameQueryEvent(self):
         """处理查询原名事件"""
         name = self._view.getTransName()
-        results = self._model.nameQuery(name)
+        self._disableView("查询原名中...")
+        command = NameQueryCommand(self._model)
+        command.finished.connect(self._onNameQueryFinished)
+        runable = CommandRunable(command, name)
+        self._threadPool.start(runable)
+
+    def _onNameQueryFinished(self, results: list[str]):
+        """查询原名完成"""
+        self._enableView("查询原名完成")
         self._view.setNameTableData(results)
-        self._view.showMsg("查询原名完成")
 
     def _handleNameDoneEvent(self):
         """处理完成原名事件"""
@@ -199,9 +261,16 @@ class AdderController(QObject):
     def _handleEmojiQueryEvent(self):
         """处理查询表情事件"""
         emojiText = self._view.getEmojiText()
-        results = self._model.emojiQuery(emojiText)
+        self._disableView("查询表情中...")
+        command = EmojiQueryCommand(self._model)
+        command.finished.connect(self._onEmojiQueryFinished)
+        runable = CommandRunable(command, emojiText)
+        self._threadPool.start(runable)
+
+    def _onEmojiQueryFinished(self, results: list[str]):
+        """查询表情完成"""
+        self._enableView("查询表情完成")
         self._view.setEmojiTableData(results)
-        self._view.showMsg("查询表情完成")
 
     def _handleEmojiDoneEvent(self):
         """处理完成表情事件"""
@@ -219,10 +288,17 @@ class AdderController(QObject):
     def _handleSymbolsQueryEvent(self):
         """处理查询符号事件"""
         symbolCode = self._view.getSymbolsCode()
-        result = self._model.symbolsQuery(symbolCode)
+        self._disableView("查询符号中...")
+        command = SymbolsQueryCommand(self._model)
+        command.finished.connect(self._onSymbolsQueryFinished)
+        runable = CommandRunable(command, symbolCode)
+        self._threadPool.start(runable)
+
+    def _onSymbolsQueryFinished(self, result: SymbolsUnit):
+        """查询符号完成"""
+        self._enableView("查询符号完成")
         self._view.setSymbolsTableData(result["symbols"])
         self._view.setSymbolsComment(result["comment"])
-        self._view.showMsg("查询符号完成")
 
     def _handleSymbolsDoneEvent(self):
         """处理完成符号事件"""
@@ -238,7 +314,16 @@ class AdderController(QObject):
 
     def _extraQuery(self, word: str):
         """额外查询处理"""
-        info = self._model.encode(word)
+        self._disableView("额外查询中...")
+        command = ExtraQueryCommand(self._model)
+        command.finished.connect(self._onExtraQueryFinished)
+        runable = CommandRunable(command, word)
+        self._threadPool.start(runable)
+
+    def _onExtraQueryFinished(self, result: tuple[str, EncodeResult]):
+        """额外查询完成"""
+        word, info = result
+        self._enableView()
         if info["code"]:
             results = self._model.query(info["code"], info["isEnglish"])
             exists = any(item["word"] == word for item in results)
@@ -250,9 +335,9 @@ class AdderController(QObject):
                     self._view.setWeight(newWeight if newWeight >= 0 else 0)
                 self._view.setTableData(info["code"], results)
                 self._view.switchToTab(0)
-                self._view.showMsg("完成事件并为新词条编码")
+                self._view.showMsg("完成事件并自动为新词条编码")
         else:
-            self._view.showMsg("完成事件但额外查询词条存在性异常！")
+            self._view.showMsg("完成事件但额外查询词条的存在性异常！")
 
     def _handleOpenWorkDirectoryEvent(self):
         """处理打开工作目录"""
@@ -261,7 +346,15 @@ class AdderController(QObject):
 
     def _handleCheckThreeWords(self):
         """处理校验三简词事件"""
-        result = self._model.checkShortThreeWords()
+        self._disableView("校验三简词中...")
+        command = CheckThreeCommand(self._model)
+        command.finished.connect(self._onCheckThreeFinished)
+        runable = CommandRunable(command)
+        self._threadPool.start(runable)
+
+    def _onCheckThreeFinished(self, result: ThreeWordsCheckedResult):
+        """校验三简词完成"""
+        self._enableView()
         conflictCount = len(result["conflictCodes"])
         additionalCount = len(result["additionalEntries"])
         if conflictCount > 0 or additionalCount > 0:
@@ -280,17 +373,33 @@ class AdderController(QObject):
         else:
             self._view.showMsg("校验三简词完毕，详情见日志")
 
-    def _handleTinyPinyinEvent(self, type: MessageType):
+    def _handleTinyPinyinEvent(self, t: MessageType):
         """处理整理拼音事件"""
-        match type:
+        msg = "整理拼音..."
+        match t:
             case MessageType.TINY_PINYIN_TABLE:
-                if self._model.tinyPinyinTable():
+                msg = "整理拼音码表文件中..."
+            case MessageType.TINY_PINYIN_TIP:
+                msg = "整理拼音滤镜文件中..."
+        self._disableView(msg)
+        command = TinyPinyinCommand(self._model)
+        command.finished.connect(self._onTinyPinyinFinished)
+        runable = CommandRunable(command, t)
+        self._threadPool.start(runable)
+
+    def _onTinyPinyinFinished(self, result: tuple[MessageType, bool]):
+        """整理拼音完成"""
+        self._enableView()
+        t, state = result
+        match t:
+            case MessageType.TINY_PINYIN_TABLE:
+                if state:
                     self._view.showMsg("整理拼音码表文件完毕")
                     self._tinyState = True
                 else:
                     self._view.showMsg("未整理拼音码表，请检查配置文件！")
             case MessageType.TINY_PINYIN_TIP:
-                if self._model.tinyOpenCCPinyin():
+                if state:
                     self._view.showMsg("整理拼音滤镜文件完毕")
                     self._tinyState = True
                 else:
@@ -298,11 +407,17 @@ class AdderController(QObject):
 
     def _handleImportWordsEvent(self, filePath: str):
         """处理导入词库文件事件"""
-        encodeState = self._model.encodeFile(filePath)
-        if encodeState:
-            self._view.showMsg("编码词库文件完毕")
-        else:
-            self._view.showMsg("未编码文件，请检查输入！")
+        self._disableView("导入词库文件中...")
+        command = ImportWordsCommand(self._model)
+        command.finished.connect(self._onImportWordsFinished)
+        runable = CommandRunable(command, filePath)
+        self._threadPool.start(runable)
+
+    def _onImportWordsFinished(self, encodeState: bool):
+        """导入词库文件完成"""
+        self._enableView(
+            "编码词库文件完毕" if encodeState else "未编码文件，请检查输入！"
+        )
 
     def encodeWord(self, word: str):
         """编码词条

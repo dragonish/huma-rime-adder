@@ -8,6 +8,7 @@ from model.calc import CalcModel
 from window.window import AdderWindow
 from common.file import openDirectory
 from common.english import isPureEnglish
+from common.conversion import getCleanWord
 from type.status import ExitCode, CacheStatus, MessageType
 from type.dict import WordTableUnit
 
@@ -93,7 +94,7 @@ class AdderController(QObject):
 
             autoEncode = False
             if cacheStatus.isPhrases():
-                cleanWord = self._model.getCleanWord(word)
+                cleanWord = getCleanWord(word)
                 if len(cleanWord) == 3:
                     autoEncode = True
 
@@ -140,7 +141,7 @@ class AdderController(QObject):
         """处理编码查询事件"""
         code = self._view.getCode()
         word = self._view.getWord()
-        isEnglish = isPureEnglish(self._model.getCleanWord(word))
+        isEnglish = isPureEnglish(getCleanWord(word))
         if code:
             results = self._model.query(code, isEnglish)
             self._view.setTableData(code, results)
@@ -153,7 +154,7 @@ class AdderController(QObject):
         code = self._view.getCode()
         indentCode = code[:-1]
         word = self._view.getWord()
-        isEnglish = isPureEnglish(self._model.getCleanWord(word))
+        isEnglish = isPureEnglish(getCleanWord(word))
         if indentCode:
             self._view.setCode(indentCode)
             results = self._model.query(indentCode, isEnglish)

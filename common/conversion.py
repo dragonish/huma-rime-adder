@@ -24,3 +24,20 @@ def safeGet(lst: Sequence[str], index: int, default: str = ""):
         return lst[index]
     except IndexError:
         return default
+
+
+def getCleanWord(word: str) -> str:
+    """获取不带符号的字符串
+
+    Args:
+        word (str): 源字符串
+
+    Returns:
+        str: 不带符号的字符串
+    """
+    deleteCharsTable = str.maketrans(
+        "",
+        "",
+        "!@#$%^&*()-=_+,.！？￥、，。“”‘’\"':;<>《》—…：；（）『』「」〖〗~|· ",
+    )
+    return word.translate(deleteCharsTable)

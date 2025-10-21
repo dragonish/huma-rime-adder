@@ -21,7 +21,7 @@ from type.status import ExitCode, CacheStatus
 from model.columns import ColumnsModel
 from model.cache import CacheList, DeleteCacheList
 from common.file import getTableSource, readFile
-from common.conversion import safeGet, strToInt
+from common.conversion import safeGet, strToInt, getCleanWord
 from common.pinyin import getPinyin, getTonePinyin
 from common.english import isPureEnglish
 from common.number import isPureNumericStr
@@ -91,12 +91,6 @@ class CalcModel:
         self._nameCached: dict[str, list[str]] = {}  # 原名缓存
         self._emojiCached: dict[str, list[str]] = {}  # 表情缓存
         self._symbolsCached: dict[str, SymbolsUnit] = {}  # 符号缓存
-
-        self._deleteCharsTable = str.maketrans(
-            "",
-            "",
-            "!@#$%^&*()-=_+,.！？￥、，。“”‘’\"':;<>《》—…：；（）『』「」〖〗~|· ",
-        )
 
         self._simpleFileStatus = False
         if tigressFiles["simple"] and os.path.exists(self._tigressFiles["simple"]):
@@ -489,7 +483,7 @@ class CalcModel:
             ]
 
         # 处理字集
-        cleanWord = self.getCleanWord(word)
+        cleanWord = getCleanWord(word)
         for ch in cleanWord:
             if not self._getRange(ch):
                 self._charsetCached.add(ch)
@@ -975,7 +969,7 @@ class CalcModel:
                         f.write("\n")
 
                     for word in pinyinCacheSet:
-                        code = getPinyin(self.getCleanWord(word))
+                        code = getPinyin(getCleanWord(word))
                         input = pinyinColmuns.str.format(text=word, code=code, weight=0)
                         f.write(input + "\n")
                         logger.info(
@@ -989,7 +983,7 @@ class CalcModel:
                     pinyinOpenccFile, mode="a+", newline="\n", encoding="utf-8"
                 ) as f:
                     for word in pinyinCacheSet:
-                        code = getTonePinyin(self.getCleanWord(word))
+                        code = getTonePinyin(getCleanWord(word))
                         input = word + "\t〔" + code + "〕\n"
                         f.write(input)
                         logger.info(
@@ -1171,17 +1165,6 @@ class CalcModel:
                 f.write(line + "\n")
         logger.info("重写符号码表完成")
 
-    def getCleanWord(self, word: str) -> str:
-        """获取不带符号的字符串
-
-        Args:
-            word (str): 源字符串
-
-        Returns:
-            str: 不带符号的字符串
-        """
-        return word.translate(self._deleteCharsTable)
-
     def tinyPinyinTable(self) -> bool:
         """整理拼音码表文件"""
         if not self._pinyinFileStatus:
@@ -1253,7 +1236,7 @@ class CalcModel:
         wordList = sorted(wordSet)
         with io.open(pinyinOpenccFile, mode="w", newline="\n", encoding="utf-8") as f:
             for unit in wordList:
-                tonePinyin = getTonePinyin(self.getCleanWord(unit))
+                tonePinyin = getTonePinyin(getCleanWord(unit))
                 input = unit + "\t〔" + tonePinyin + "〕\n"
                 f.write(input)
 
@@ -1275,7 +1258,7 @@ class CalcModel:
                 hadOther = False
                 for c in self._codeDict[code]:
                     cw = c["word"]
-                    w = self.getCleanWord(cw)
+                    w = getCleanWord(cw)
                     if len(w) == 3:
                         hadWords += 1
                         record.append(cw)
@@ -1290,12 +1273,12 @@ class CalcModel:
 
                 if hadOther and hadWords > 0:
                     result["conflictCodes"][code] = [
-                        x for x in record if len(self.getCleanWord(x)) == 3
+                        x for x in record if len(getCleanWord(x)) == 3
                     ]
             elif len(code) == 4:
                 threeWords: list[str] = []
                 for c in self._codeDict[code]:
-                    w = self.getCleanWord(c["word"])
+                    w = getCleanWord(c["word"])
                     if len(w) == 3:
                         threeWords.append(c["word"])
                 if len(threeWords) == 0:
@@ -1305,7 +1288,7 @@ class CalcModel:
                 hadSimple = False
                 if tc in self._codeDict:
                     for sc in self._codeDict[tc]:
-                        sw = self.getCleanWord(sc["word"])
+                        sw = getCleanWord(sc["word"])
                         if len(sw) == 3 or self._getRange(sw):
                             hadSimple = True
                             break
@@ -1395,7 +1378,7 @@ class CalcModel:
         Returns:
             str: 编码结果
         """
-        cleanWord = self.getCleanWord(word)
+        cleanWord = getCleanWord(word)
         newWordLen = len(cleanWord)
 
         if newWordLen == 0:
@@ -1469,7 +1452,7 @@ class CalcModel:
         Returns:
             EncodeResult: 编码结果
         """
-        cleanWord = self.getCleanWord(word)
+        cleanWord = getCleanWord(word)
         newWordLen = len(cleanWord)
 
         if newWordLen == 0:
@@ -1564,7 +1547,7 @@ class CalcModel:
                 # 降序排序
                 self._codeDict[code].sort(key=lambda item: item["weight"], reverse=True)
                 for item in self._codeDict[code]:
-                    rangeState = self._getRange(self.getCleanWord(item["word"]))
+                    rangeState = self._getRange(getCleanWord(item["word"]))
                     results.append(
                         {
                             **item,
@@ -1670,7 +1653,7 @@ class CalcModel:
             return CacheStatus.INVALID_CODE
 
         cacheStatus: CacheStatus = CacheStatus.UNKNOWN
-        cleanWord = self.getCleanWord(word)
+        cleanWord = getCleanWord(word)
         isEnglish = isPureEnglish(cleanWord)  # 是否为英文单词
 
         if isEnglish:

@@ -191,7 +191,8 @@ class AdderController(QObject):
             self._model.updateName(transName, oriNames)
             self._view.clearName()
             self._view.showMsg("完成原名更新")
-            self._extraQuery(transName)
+            if len(oriNames) > 0:
+                self._extraQuery(transName)
         else:
             self._view.showMsg("译名为空，请检查输入！")
 
@@ -210,7 +211,8 @@ class AdderController(QObject):
             self._model.updateEmoji(emojiText, emojiList)
             self._view.clearEmoji()
             self._view.showMsg("完成表情更新")
-            self._extraQuery(emojiText)
+            if len(emojiList) > 0:
+                self._extraQuery(emojiText)
         else:
             self._view.showMsg("表情文本为空，请检查输入！")
 

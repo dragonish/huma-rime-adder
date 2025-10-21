@@ -328,9 +328,9 @@ class AdderWindow(QMainWindow):
         self._status.showMessage("等待操作中...")
         self.setStatusBar(self._status)
 
-    def _showTinyConfirmationDialog(self, type: MessageType):
+    def _showTinyConfirmationDialog(self, t: MessageType):
         msg = ""
-        match type:
+        match t:
             case MessageType.TINY_PINYIN_TABLE:
                 msg = "您确定要执行整理拼音码表操作吗？这将移除拼音码表中重复的编码词条，然后重写拼音码表文件！"
             case MessageType.TINY_PINYIN_TIP:
@@ -339,7 +339,7 @@ class AdderWindow(QMainWindow):
         msgBox = ConfirmDialog(msg, self)
         reply = msgBox.exec()
         if reply:
-            self.tinySignal.emit(type)
+            self.tinySignal.emit(t)
 
     def showEvent(self, event: QShowEvent):
         """重写窗口显示事件"""

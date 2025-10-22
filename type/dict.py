@@ -14,7 +14,7 @@ class CodeTableUnit(CodeUnit):
     range: bool
 
 
-class WordTableUnit(CodeUnit):
+class WordTableUnit(CodeTableUnit):
     code: str
 
 

@@ -122,26 +122,12 @@ class WordTableModel(QAbstractTableModel):
         removedData = self._data[row]
         del self._data[row]
         self.endRemoveRows()
-        return WordTableUnit(
-            {
-                "word": removedData["word"],
-                "weight": removedData["weight"],
-                "source": removedData["source"],
-                "code": self._code,
-            }
-        )
+        return WordTableUnit({**removedData, "code": self._code})
 
     def getRow(self, row: int) -> WordTableUnit:
         """获取行数据"""
         rowData = self._data[row]
-        return WordTableUnit(
-            {
-                "word": rowData["word"],
-                "weight": rowData["weight"],
-                "source": rowData["source"],
-                "code": self._code,
-            }
-        )
+        return WordTableUnit({**rowData, "code": self._code})
 
     def getWeight(self, row) -> int:
         """获取行权重"""

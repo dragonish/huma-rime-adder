@@ -56,6 +56,8 @@ class Config(TypedDict):
     work: str
     input: str
     encode: str
+    tinyPinyinTable: bool
+    tinyPinyinTip: bool
     tigress: TigressFiles
 
 

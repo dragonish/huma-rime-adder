@@ -2005,6 +2005,7 @@ class CalcModel:
         Returns:
             bool: 是否成功处理
         """
+        logger.info("开始编码词库文件...")
         if not os.path.exists(file):
             logger.error("输入的词库文件不存在: {}", file)
             return False
@@ -2056,6 +2057,6 @@ class CalcModel:
 
             count += 1
 
-        logger.info("共批量新增 {} 个词条", count)
+        logger.info("编码词库文件完毕，共批量新增 {} 个词条", count)
 
         return True

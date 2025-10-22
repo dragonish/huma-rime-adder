@@ -26,6 +26,8 @@ def loadConfig(configFile: str | None) -> Config:
         "work": "",
         "input": "",
         "encode": "",
+        "tinyPinyinTable": False,
+        "tinyPinyinTip": False,
         "tigress": files,
     }
 

@@ -44,14 +44,19 @@ if __name__ == "__main__":
         logger.error("缺失码表文件，程序结束运行，退出代码: {}", ExitCode.ERROR.value)
         sys.exit(ExitCode.ERROR.value)  #! 退出程序
 
-    if config["encode"]:
-        encodeState = model.encodeFile(config["encode"])
+    if config["encode"] or config["tinyPinyinTable"] or config["tinyPinyinTip"]:
         exitCode = ExitCode.NOTHING
-        if encodeState:
-            exitCode = model.writer()
-            logger.info("程序结束运行，退出代码: {}", exitCode.value)
-        else:
-            logger.warning("未编码词库文件，程序结束运行，退出代码: {}", exitCode.value)
+        if config["encode"]:
+            if model.encodeFile(config["encode"]):
+                exitCode = model.writer()
+        if config["tinyPinyinTable"]:
+            if model.tinyPinyinTable():
+                exitCode = ExitCode.SUCCESS
+        if config["tinyPinyinTip"]:
+            if model.tinyOpenCCPinyin():
+                exitCode = ExitCode.SUCCESS
+
+        logger.info("程序结束运行，退出代码: {}", exitCode.value)
         sys.exit(exitCode.value)
 
     adderApp = Application.initialize(sys.argv)

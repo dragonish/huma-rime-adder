@@ -30,6 +30,18 @@ def parseArgsWithConfig() -> Config:
     parser.add_argument("-w", "--work", required=False, help="自定义工作目录")
     parser.add_argument("-i", "--input", required=False, help="直接编码的词条")
     parser.add_argument("-e", "--encode", required=False, help="批量编码词库文件")
+    parser.add_argument(
+        "-t",
+        "--tiny-pinyin-table",
+        action="store_true",
+        help="整理拼音码表文件",
+    )
+    parser.add_argument(
+        "-p",
+        "--tiny-pinyin-tip",
+        action="store_true",
+        help="整理拼音滤镜文件",
+    )
 
     """解析命令行参数，合并配置文件设置"""
     # 解析命令行参数
@@ -62,5 +74,11 @@ def parseArgsWithConfig() -> Config:
 
     if args.encode:
         configSettings["encode"] = args.encode
+
+    if args.tiny_pinyin_table:
+        configSettings["tinyPinyinTable"] = True
+
+    if args.tiny_pinyin_tip:
+        configSettings["tinyPinyinTip"] = True
 
     return configSettings

@@ -10,6 +10,7 @@ from loguru import logger
 from type.dict import (
     CacheUnit,
     CodeTableUnit,
+    CacheTableUnit,
     WordTableUnit,
     CodeUnit,
     EncodeResult,
@@ -78,15 +79,15 @@ class CalcModel:
         self._isParseSymbols = False  # 是否已解析符号码表
 
         self._tigressCached: list[CacheUnit] = []  # 虎码词条缓存
-        self._tigressDeleteCached: list[WordTableUnit] = []  # 虎码词条删除缓存
+        self._tigressDeleteCached: list[CacheTableUnit] = []  # 虎码词条删除缓存
         self._simpleCached: list[CacheUnit] = []  # 简码缓存
-        self._simpleDeleteCached: list[WordTableUnit] = []  # 简码删除缓存
+        self._simpleDeleteCached: list[CacheTableUnit] = []  # 简码删除缓存
         self._phrasesCached: list[CacheUnit] = []  # 词组缓存
-        self._phrasesDeleteCached: list[WordTableUnit] = []  # 词组删除缓存
+        self._phrasesDeleteCached: list[CacheTableUnit] = []  # 词组删除缓存
         self._charactersCached: list[CacheUnit] = []  # 单字缓存
-        self._charactersDeleteCached: list[WordTableUnit] = []  # 单字删除缓存
+        self._charactersDeleteCached: list[CacheTableUnit] = []  # 单字删除缓存
         self._englishCached: list[CacheUnit] = []  # 英文缓存
-        self._englishDeleteCached: list[WordTableUnit] = []  # 英文删除缓存
+        self._englishDeleteCached: list[CacheTableUnit] = []  # 英文删除缓存
         self._charsetCached: set[str] = set()  # 字集缓存
         self._nameCached: dict[str, list[str]] = {}  # 原名缓存
         self._emojiCached: dict[str, list[str]] = {}  # 表情缓存
@@ -1783,7 +1784,7 @@ class CalcModel:
 
         return cacheStatus
 
-    def delete(self, item: WordTableUnit):
+    def delete(self, item: CacheTableUnit):
         """删除词条
 
         Args:

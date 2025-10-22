@@ -11,6 +11,7 @@ from common.conversion import getCleanWord
 from type.status import ExitCode, CacheStatus, MessageType
 from type.dict import (
     CodeTableUnit,
+    CacheTableUnit,
     WordTableUnit,
     EncodeResult,
     SymbolsUnit,
@@ -218,7 +219,7 @@ class AdderController(QObject):
         self._enableView("查询完成")
         self._view.setTableData(code, results)
 
-    def _handleWordDeleteEvent(self, deleteItem: WordTableUnit):
+    def _handleWordDeleteEvent(self, deleteItem: CacheTableUnit):
         """处理删除词条事件"""
         self._model.delete(deleteItem)
         self._view.showMsg("已删除词条")

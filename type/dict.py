@@ -14,6 +14,10 @@ class CodeTableUnit(CodeUnit):
     range: bool
 
 
+class CacheTableUnit(CodeUnit):
+    code: str
+
+
 class WordTableUnit(CodeTableUnit):
     code: str
 

@@ -126,6 +126,10 @@ class AdderController(QObject):
                 self._view.showMsg("添加成功并自动编码三简词")
             elif not cacheStatus.isException():
                 self._view.clear()
+                # * 重新查询重码结果
+                isEnglish = cacheStatus == CacheStatus.ENGLISH
+                results = self._model.query(code, isEnglish)
+                self._view.setTableData(code, results)
 
     def _disableView(self, msg: str | None = None):
         """禁用视图并显示消息"""

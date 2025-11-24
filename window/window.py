@@ -3,8 +3,8 @@
 
 import base64
 from loguru import logger
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtGui import QCloseEvent, QIcon, QPixmap, QShowEvent
+from PyQt6.QtCore import pyqtSignal, Qt
+from PyQt6.QtGui import QCloseEvent, QIcon, QPixmap, QShowEvent, QCursor
 from PyQt6.QtWidgets import (
     QFileDialog,
     QGridLayout,
@@ -115,7 +115,10 @@ class AdderWindow(QMainWindow):
         minButton.clicked.connect(self._handleMinEvent)
         wordLayout.addWidget(minButton, 2, 5)
 
-        wordLayout.addWidget(QLabel("重码:"), 3, 0)
+        self._duplicateLabel = QLabel("重码:")
+        self._duplicateLabel.setCursor(QCursor(Qt.CursorShape.WhatsThisCursor))
+        self._duplicateLabel.setToolTip("编码: 空")
+        wordLayout.addWidget(self._duplicateLabel, 3, 0)
         self._wordTableModel = WordTableModel()
         self.wordTableView = WordTableView(self._wordTableModel)
         self.wordTableView.passWeight.connect(self.setWeight)
@@ -460,6 +463,7 @@ class AdderWindow(QMainWindow):
         self._weightInput.setValue(0)
         self._wordTableModel.clearData()
         self._rangeLabel.setText("")
+        self._duplicateLabel.setToolTip("编码: 空")
 
     def clearName(self) -> None:
         """清空所有名称输入"""
@@ -519,6 +523,7 @@ class AdderWindow(QMainWindow):
     def setTableData(self, code: str, data: list[CodeTableUnit]) -> None:
         """设置重码列表数据"""
         self._wordTableModel.updateData(code, data)
+        self._duplicateLabel.setToolTip(f"编码: {code}")
 
     def getTransName(self) -> str:
         """获取译名"""

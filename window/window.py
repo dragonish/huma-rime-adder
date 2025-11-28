@@ -101,6 +101,7 @@ class AdderWindow(QMainWindow):
         wordLayout.addWidget(QLabel("权重:"), 2, 0)
         self._weightInput = QSpinBox()
         self._weightInput.setMaximum(268435455)
+        self._weightInput.returnPressed.connect(self.addButton.click)
         wordLayout.addWidget(self._weightInput, 2, 1)
         topButton = NoFoucsButton("置顶")
         topButton.clicked.connect(self._handleTopEvent)

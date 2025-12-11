@@ -1220,9 +1220,23 @@ class CalcModel:
 
         pinyinOpenccFile = self._tigressFiles["pinyintip"]
         wordSet: set[str] = set()
+        oldDict: dict[str, str] = {}
 
-        logger.info("开始整理拼音滤镜文件: {}", pinyinOpenccFile)
+        logger.info("开始整理拼音滤镜文件...")
         self._parseMain()
+
+        logger.info("解析拼音滤镜文件: {}", pinyinOpenccFile)
+        # ? 记录旧滤镜文件中已整理过的条目，避免手动调整后的编码会被再次整理给覆盖
+        lines = readFile(pinyinOpenccFile)
+        for line in lines:
+            item = line.strip()
+            fields = item.split("\t")
+            if len(fields) != 2:
+                continue
+            word = safeGet(fields, 0)
+            code = safeGet(fields, 1)
+            if code.startswith("〔") and code.endswith("〕"):
+                oldDict[word] = code
 
         logger.info("解析用户码表...")
         for code in self._codeDict:
@@ -1237,8 +1251,11 @@ class CalcModel:
         wordList = sorted(wordSet)
         with io.open(pinyinOpenccFile, mode="w", newline="\n", encoding="utf-8") as f:
             for unit in wordList:
-                tonePinyin = getTonePinyin(getCleanWord(unit))
-                input = unit + "\t〔" + tonePinyin + "〕\n"
+                if unit in oldDict:
+                    input = unit + "\t" + oldDict[unit] + "\n"
+                else:
+                    tonePinyin = getTonePinyin(getCleanWord(unit))
+                    input = unit + "\t〔" + tonePinyin + "〕\n"
                 f.write(input)
 
         logger.info("整理拼音滤镜文件完毕")

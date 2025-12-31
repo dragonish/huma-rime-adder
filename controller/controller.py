@@ -376,7 +376,7 @@ class AdderController(QObject):
             else:
                 self._view.showMsg("校验三简词完毕，详情见日志")
         else:
-            self._view.showMsg("校验三简词完毕，详情见日志")
+            self._view.showMsg("校验三简词完毕，不存在词条冲突")
 
     def _handleTinyPinyinEvent(self, t: MessageType):
         """处理整理拼音事件"""

@@ -37,6 +37,7 @@ from .style import (
     ClickableLabel,
 )
 from .dialog import ConfirmDialog
+from .layout import InfoGridLayout
 
 
 class AdderWindow(QMainWindow):
@@ -261,9 +262,9 @@ class AdderWindow(QMainWindow):
     def _createOtherTab(self):
         """创建其他标签页"""
         otherWindow = QWidget(self)
-        otherLayout = QGridLayout()
+        otherLayout = InfoGridLayout()
 
-        otherLayout.addWidget(QLabel(f"程序版本: {APP_VERSION}"), 0, 0)
+        otherLayout.addRowWidget(QLabel(f"程序版本: {APP_VERSION}"))
 
         sourceWidget = QWidget()
         sourceLayout = QHBoxLayout()
@@ -283,47 +284,45 @@ class AdderWindow(QMainWindow):
         )
         sourceLayout.addItem(spacer)
         sourceWidget.setLayout(sourceLayout)
-        otherLayout.addWidget(sourceWidget, 1, 0)
+        otherLayout.addRowWidget(sourceWidget)
 
         self.workDirectoryLabel = QLabel("")
-        otherLayout.addWidget(self.workDirectoryLabel, 2, 0)
+        otherLayout.addRowWidget(self.workDirectoryLabel)
 
-        otherLayout.addWidget(
-            QLabel(f"日志文件: {LogManager.getLogFileLocation()}"), 3, 0
-        )
+        otherLayout.addRowWidget(QLabel(f"日志文件: {LogManager.getLogFileLocation()}"))
 
         importWordsButton = NoFoucsButton("导入词库文件")
         importWordsButton.clicked.connect(self._openFileDialog)
-        otherLayout.addWidget(importWordsButton, 4, 0)
+        otherLayout.addRowWidget(importWordsButton)
 
         self.checkThreeWords = NoFoucsButton("校验三简词")
-        otherLayout.addWidget(self.checkThreeWords, 5, 0)
+        otherLayout.addRowWidget(self.checkThreeWords)
 
         tinyPinyinButton = NoFoucsButton("整理拼音码表")
         tinyPinyinButton.clicked.connect(
             lambda: self._showTinyConfirmationDialog(MessageType.TINY_PINYIN_TABLE)
         )
-        otherLayout.addWidget(tinyPinyinButton, 6, 0)
+        otherLayout.addRowWidget(tinyPinyinButton)
 
         tinyPinyinTipButton = NoFoucsButton("整理拼音滤镜")
         tinyPinyinTipButton.clicked.connect(
             lambda: self._showTinyConfirmationDialog(MessageType.TINY_PINYIN_TIP)
         )
-        otherLayout.addWidget(tinyPinyinTipButton, 7, 0)
+        otherLayout.addRowWidget(tinyPinyinTipButton)
 
         self.openWorkDirectoryButton = NoFoucsButton("打开工作目录")
-        otherLayout.addWidget(self.openWorkDirectoryButton, 8, 0)
+        otherLayout.addRowWidget(self.openWorkDirectoryButton)
 
         openLogDirectoryButton = NoFoucsButton("打开日志目录")
         openLogDirectoryButton.clicked.connect(LogManager.openLogDirectory)
-        otherLayout.addWidget(openLogDirectoryButton, 9, 0)
+        otherLayout.addRowWidget(openLogDirectoryButton)
 
         forceExitButton = NoFoucsButton("强制退出")
         forceExitButton.setStyleSheet(BUTTON_RED)
         forceExitButton.clicked.connect(self._forceExit)
-        otherLayout.addWidget(forceExitButton, 10, 0)
+        otherLayout.addRowWidget(forceExitButton)
 
-        otherWindow.setLayout(otherLayout)
+        otherWindow.setLayout(otherLayout.getLayout())
         self._tabWidget.addTab(otherWindow, "其他")
 
     def _createStatusBar(self):

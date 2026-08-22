@@ -146,6 +146,10 @@ class AdderController(QObject):
     def _handleEncodeEvent(self):
         """处理词条编码事件"""
         word = self._view.getWord()
+        if len(word) == 0:
+            self._view.showMsg("没有找到词条，请检查输入！")
+            return
+
         self._disableView("编码词条中...")
         command = EncodeCommand(self._model)
         command.finished.connect(self._onEncodeFinished)

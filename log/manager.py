@@ -77,7 +77,14 @@ class LogManager:
         """设置日志记录器"""
         cls._initialize()
         logFile = cls._logDir / f"{cls._appName}.log"
-        logger.add(logFile, level=level, rotation="100 MB")
+        logger.add(
+            logFile,
+            level=level,
+            rotation="10 MB",
+            retention=10,
+            compression="zip",
+            encoding="utf-8",
+        )
         print(f"日志文件位置: {logFile}")
         print(f"日志级别: {level}")
 

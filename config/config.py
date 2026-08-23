@@ -20,6 +20,7 @@ def loadConfig(configFile: str | None) -> Config:
         "emoji": "opencc/emoji.txt",
         "name": "",
         "symbols": "symbols.yaml",
+        "chaifen": "opencc/hu_cf.txt",
     }
     config: Config = {
         "log": "INFO",

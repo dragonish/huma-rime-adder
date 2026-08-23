@@ -298,6 +298,9 @@ class AdderWindow(QMainWindow):
         self.checkThreeWords = NoFoucsButton("校验三简词")
         otherLayout.addRowWidget(self.checkThreeWords)
 
+        self.checkChaifen = NoFoucsButton("校验拆分滤镜")
+        otherLayout.addRowWidget(self.checkChaifen)
+
         tinyPinyinButton = NoFoucsButton("整理拼音码表")
         tinyPinyinButton.clicked.connect(
             lambda: self._showTinyConfirmationDialog(MessageType.TINY_PINYIN_TABLE)

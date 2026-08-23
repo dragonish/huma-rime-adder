@@ -38,3 +38,6 @@ emoji = opencc/emoji.txt
 
 ; 符号字典文件 (可选)
 symbols = symbols.yaml
+
+; 拆分滤镜配置文件 (可选)
+chaifen = opencc/hu_cf.txt

@@ -27,6 +27,7 @@ from .command import (
     SymbolsQueryCommand,
     ExtraQueryCommand,
     CheckThreeCommand,
+    CheckChaifenCommand,
     TinyPinyinCommand,
     ImportWordsCommand,
 )
@@ -73,6 +74,7 @@ class AdderController(QObject):
         self._view.wordTableView.rowDeleted.connect(self._handleWordDeleteEvent)
         self._view.wordTableView.editWeight.connect(self._handleWordWeightEditEvent)
         self._view.checkThreeWords.clicked.connect(self._handleCheckThreeWords)
+        self._view.checkChaifen.clicked.connect(self._handleCheckChaifen)
 
     def _handleCloseEvent(self, forceExit: bool):
         """处理关闭事件"""
@@ -361,6 +363,14 @@ class AdderController(QObject):
         runable = CommandRunable(command)
         self._threadPool.start(runable)
 
+    def _handleCheckChaifen(self):
+        """处理校验拆分滤镜"""
+        self._disableView("校验校验拆分滤镜中...")
+        command = CheckChaifenCommand(self._model)
+        command.finished.connect(self._onCheckChaifenFinished)
+        runable = CommandRunable(command)
+        self._threadPool.start(runable)
+
     def _onCheckThreeFinished(self, result: ThreeWordsCheckedResult):
         """校验三简词完成"""
         self._enableView()
@@ -381,6 +391,14 @@ class AdderController(QObject):
                 self._view.showMsg("校验三简词完毕，详情见日志")
         else:
             self._view.showMsg("校验三简词完毕，不存在词条冲突")
+
+    def _onCheckChaifenFinished(self, result: bool):
+        """校验拆分滤镜完成"""
+        self._enableView()
+        if result:
+            self._view.showMsg("校验拆分滤镜完毕，收录存在缺失，详情见日志")
+        else:
+            self._view.showMsg("校验拆分滤镜完毕，收录完整")
 
     def _handleTinyPinyinEvent(self, t: MessageType):
         """处理整理拼音事件"""

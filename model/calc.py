@@ -1375,6 +1375,50 @@ class CalcModel:
 
         return True
 
+    def checkChaifen(self) -> bool:
+        """校验拆分滤镜"""
+        logger.info("开始校验拆分滤镜...")
+        chaiFile = self._tigressFiles["chaifen"]
+
+        # 校验 chaiFile 值及其对应文件是否存在
+        if not chaiFile or not os.path.exists(chaiFile):
+            logger.warning("未找到拆分滤镜文件，跳过校验: {}", chaiFile)
+            return True
+
+        # 读取并解析拆分文件，取每行行首第一个字收录至集合
+        chaiSet: set[str] = set()
+        for line in readFile(chaiFile):
+            item = line.strip()
+            if not item:
+                continue
+            chaiSet.add(item[0])
+
+        if len(chaiSet) == 0:
+            logger.warning("拆分滤镜文件内容为空，跳过校验: {}", chaiFile)
+            return True
+
+        # 解析主码表以获得单字字典
+        self._parseMain()
+
+        # 跳过在 _parseMain 中补充的大小写英文字母键
+        letters = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+        missCount = 0
+        for char in self._characterDict:
+            if char in letters:
+                continue
+            if char not in chaiSet:
+                code = self._characterDict[char]
+                logger.warning(
+                    "单字 {char}({code}) 缺失拆分，其 Unicode 值为 U+{unicode:04X}",
+                    char=char,
+                    code=code,
+                    unicode=ord(char),
+                )
+                missCount += 1
+
+        logger.info("校验拆分滤镜完成，缺失 {count} 个单字拆分", count=missCount)
+        return missCount != 0
+
     def fileChecker(self) -> str:
         """文件存在性检查器
 

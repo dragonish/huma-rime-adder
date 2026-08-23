@@ -53,6 +53,7 @@ class TigressFiles(TypedDict):
     name: str
     emoji: str
     symbols: str
+    chaifen: str
 
 
 class Config(TypedDict):

@@ -103,6 +103,14 @@ class CheckThreeCommand(CalcCommand):
         self.finished.emit(result)
 
 
+class CheckChaifenCommand(CalcCommand):
+    """校验拆分命令"""
+
+    def execute(self):
+        result = self._model.checkChaifen()
+        self.finished.emit(result)
+
+
 class TinyPinyinCommand(CalcCommand):
     """整理拼音命令"""
 

@@ -11,12 +11,12 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           fetch-tags: true
       - name: Set Up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Install Dependencies
@@ -29,7 +29,7 @@ jobs:
           pyinstaller -i icon.ico -n huma-rime-adder main.py
           copy config.ini.template dist\huma-rime-adder\
       - name: Upload Windows build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: windows-build
           path: dist/huma-rime-adder/
@@ -37,12 +37,12 @@ jobs:
   build-linux:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           fetch-tags: true
       - name: Set Up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Install Dependencies
@@ -55,7 +55,7 @@ jobs:
           pyinstaller -i icon.ico -n huma-rime-adder main.py
           cp config.ini.template dist/huma-rime-adder/
       - name: Upload Linux build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: linux-build
           path: dist/huma-rime-adder/
@@ -63,12 +63,12 @@ jobs:
   build-macos-intel:
     runs-on: macos-15-intel
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           fetch-tags: true
       - name: Set Up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Install Dependencies
@@ -81,7 +81,7 @@ jobs:
           pyinstaller -i icon.ico -n huma-rime-adder main.py
           cp config.ini.template dist/huma-rime-adder/
       - name: Upload macOS Intel build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: macos-intel-build
           path: dist/huma-rime-adder/
@@ -89,12 +89,12 @@ jobs:
   build-macos-arm64:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           fetch-tags: true
       - name: Set Up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - name: Install Dependencies
@@ -107,7 +107,7 @@ jobs:
           pyinstaller -i icon.ico -n huma-rime-adder main.py
           cp config.ini.template dist/huma-rime-adder/
       - name: Upload macOS ARM64 build
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: macos-arm64-build
           path: dist/huma-rime-adder/
@@ -117,7 +117,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -133,22 +133,22 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           config_file: .github/scripts/tag-changelog-config.cjs
       - name: Download Windows build
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: windows-build
           path: release/windows
       - name: Download Linux build
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: linux-build
           path: release/linux
       - name: Download macOS Intel build
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: macos-intel-build
           path: release/macos-intel
       - name: Download macOS ARM64 build
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: macos-arm64-build
           path: release/macos-arm64

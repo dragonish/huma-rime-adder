@@ -28,6 +28,7 @@ jobs:
         run: |
           pyinstaller -i icon.ico -n huma-rime-adder main.py
           copy config.ini.template dist\huma-rime-adder\
+          copy scripts\run.bat dist\huma-rime-adder\
       - name: Upload Windows build
         uses: actions/upload-artifact@v7
         with:

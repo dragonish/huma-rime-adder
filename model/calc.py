@@ -2072,7 +2072,10 @@ class CalcModel:
             logger.error("输入的词库文件不存在: {}", file)
             return False
 
-        inputSet = set(readFile(file))
+        inputSet = {
+            line.split("\t")[0]
+            for line in readFile(file)
+        }
         if len(inputSet) == 0:
             logger.warning("输入词库文件内容为空: {}", file)
             return False

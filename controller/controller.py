@@ -6,7 +6,6 @@ from PyQt6.QtCore import QObject, QThreadPool
 from app.application import exitApp
 from model.calc import CalcModel
 from window.window import AdderWindow
-from common.file import openDirectory
 from common.conversion import getCleanWord
 from type.status import ExitCode, CacheStatus, MessageType
 from type.dict import (
@@ -52,7 +51,9 @@ class AdderController(QObject):
         if not self._model.getSymbolsFileStatus():
             self._view.hideSymbolsTab()
 
-        self._view.workDirectoryLabel.setText(f"工作目录: {self._model.getWorkDir()}")
+        workDir = self._model.getWorkDir()
+        self._view.workDirClickableLabel.setText(workDir)
+        self._view.workDirClickableLabel.setDirectory(workDir)
 
         self._view.closeSignal.connect(self._handleCloseEvent)  # 监听关闭信号
         self._view.tinySignal.connect(self._handleTinyPinyinEvent)
@@ -68,9 +69,6 @@ class AdderController(QObject):
         self._view.emojiDoneButton.clicked.connect(self._handleEmojiDoneEvent)
         self._view.symbolsQueryButton.clicked.connect(self._handleSymbolsQueryEvent)
         self._view.symbolsDoneButton.clicked.connect(self._handleSymbolsDoneEvent)
-        self._view.openWorkDirectoryButton.clicked.connect(
-            self._handleOpenWorkDirectoryEvent
-        )
         self._view.wordTableView.rowDeleted.connect(self._handleWordDeleteEvent)
         self._view.wordTableView.editWeight.connect(self._handleWordWeightEditEvent)
         self._view.checkThreeWords.clicked.connect(self._handleCheckThreeWords)
@@ -349,11 +347,6 @@ class AdderController(QObject):
                 self._view.showMsg("完成事件并自动为新词条编码")
         else:
             self._view.showMsg("完成事件但额外查询词条的存在性异常！")
-
-    def _handleOpenWorkDirectoryEvent(self):
-        """处理打开工作目录"""
-        workDir = self._model.getWorkDir()
-        openDirectory(workDir)
 
     def _handleCheckThreeWords(self):
         """处理校验三简词事件"""

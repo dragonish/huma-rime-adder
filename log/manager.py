@@ -5,7 +5,7 @@ import os
 import sys
 from loguru import logger
 from pathlib import Path
-from common.file import isDirectoryWritable, openDirectory
+from common.file import isDirectoryWritable
 
 
 class LogManager:
@@ -95,11 +95,6 @@ class LogManager:
         return str(logFile)
 
     @classmethod
-    def openLogDirectory(cls):
-        """打开日志文件位置"""
-        if not hasattr(cls, "_logDir") or not cls._logDir:
-            print("错误：未设置日志目录")
-            return
-
-        logDir = str(cls._logDir)
-        openDirectory(logDir)
+    def getLogDirectory(cls) -> str:
+        """获取日志文件所在目录"""
+        return str(cls._logDir)

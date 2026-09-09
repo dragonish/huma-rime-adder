@@ -286,10 +286,35 @@ class AdderWindow(QMainWindow):
         sourceWidget.setLayout(sourceLayout)
         otherLayout.addRowWidget(sourceWidget)
 
-        self.workDirectoryLabel = QLabel("")
-        otherLayout.addRowWidget(self.workDirectoryLabel)
+        workDirWidget = QWidget()
+        workDirLayout = QHBoxLayout()
+        workDirLayout.setSpacing(5)
+        workDirLayout.setContentsMargins(0, 0, 0, 0)
+        workDirLayout.addWidget(QLabel("工作目录:"))
+        self.workDirClickableLabel = ClickableLabel("")
+        workDirLayout.addWidget(self.workDirClickableLabel)
+        workDirSpacer = QSpacerItem(
+            0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+        )
+        workDirLayout.addItem(workDirSpacer)
+        workDirWidget.setLayout(workDirLayout)
+        otherLayout.addRowWidget(workDirWidget)
 
-        otherLayout.addRowWidget(QLabel(f"日志文件: {LogManager.getLogFileLocation()}"))
+        logWidget = QWidget()
+        logLayout = QHBoxLayout()
+        logLayout.setSpacing(5)
+        logLayout.setContentsMargins(0, 0, 0, 0)
+        logLayout.addWidget(QLabel("日志文件:"))
+        logFileLocation = LogManager.getLogFileLocation()
+        logLayout.addWidget(
+            ClickableLabel(logFileLocation, directory=LogManager.getLogDirectory())
+        )
+        logSpacer = QSpacerItem(
+            0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum
+        )
+        logLayout.addItem(logSpacer)
+        logWidget.setLayout(logLayout)
+        otherLayout.addRowWidget(logWidget)
 
         importWordsButton = NoFoucsButton("导入词库文件")
         importWordsButton.clicked.connect(self._openFileDialog)
@@ -312,13 +337,6 @@ class AdderWindow(QMainWindow):
             lambda: self._showTinyConfirmationDialog(MessageType.TINY_PINYIN_TIP)
         )
         otherLayout.addRowWidget(tinyPinyinTipButton)
-
-        self.openWorkDirectoryButton = NoFoucsButton("打开工作目录")
-        otherLayout.addRowWidget(self.openWorkDirectoryButton)
-
-        openLogDirectoryButton = NoFoucsButton("打开日志目录")
-        openLogDirectoryButton.clicked.connect(LogManager.openLogDirectory)
-        otherLayout.addRowWidget(openLogDirectoryButton)
 
         forceExitButton = NoFoucsButton("强制退出")
         forceExitButton.setStyleSheet(BUTTON_RED)

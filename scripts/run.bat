@@ -16,7 +16,7 @@ if %errorlevel% == 0 (
   echo 重新部署输入法...
   for /d %%i in ("C:\Program Files (x86)\Rime\weasel-*") do (
     if exist "%%i\WeaselDeployer.exe" (
-      echo 在 "%%i\WeaselDeployer.exe" 中发现小狼毫输入法程序
+      echo 发现小狼毫输入法程序在 "%%i\WeaselDeployer.exe"
       "%%i\WeaselDeployer.exe" /deploy
       echo 重新部署输入法完成
       goto :end
